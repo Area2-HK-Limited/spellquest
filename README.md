@@ -69,7 +69,23 @@ npm run dev
 
 ## 📸 截圖
 
-> Coming soon...
+### 🏠 主頁
+![Home](screenshots/home.png)
+
+### 🔤 英文串字
+![Spelling](screenshots/spelling.png)
+
+### 📝 句子重組
+![Sentence](screenshots/sentence.png)
+
+### ✏️ 中文認字
+![Flashcard](screenshots/flashcard.png)
+
+### 🎯 聽寫模式
+![Dictation](screenshots/dictation.png)
+
+### 🔗 配對遊戲
+![Matching](screenshots/matching.png)
 
 ## 🛠️ 技術架構
 
