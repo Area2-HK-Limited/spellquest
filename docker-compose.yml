@@ -47,6 +47,18 @@ services:
     depends_on:
       - postgrest
 
+  # OCR Service (Tesseract)
+  ocr:
+    build:
+      context: ./backend/ocr
+      dockerfile: Dockerfile
+    container_name: spellquest_ocr
+    restart: always
+    environment:
+      TZ: Asia/Hong_Kong
+    ports:
+      - "3002:3002"
+
   # Adminer (Database Admin UI)
   adminer:
     image: adminer:latest
