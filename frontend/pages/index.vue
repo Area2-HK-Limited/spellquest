@@ -61,6 +61,16 @@
         </div>
       </NuxtLink>
 
+      <!-- Dictation -->
+      <NuxtLink to="/dictation" class="sq-card bg-white p-8 text-center cursor-pointer hover:bg-pink-50">
+        <div class="text-6xl mb-4">🎯</div>
+        <h2 class="text-2xl font-bold text-pink-600 mb-2">聽寫模式</h2>
+        <p class="text-gray-600">聽發音，寫答案</p>
+        <div class="mt-4">
+          <UBadge color="pink" size="lg">Dictation</UBadge>
+        </div>
+      </NuxtLink>
+
       <!-- Stats -->
       <NuxtLink to="/stats" class="sq-card bg-white p-8 text-center cursor-pointer hover:bg-rose-50">
         <div class="text-6xl mb-4">📊</div>
