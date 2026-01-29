@@ -41,6 +41,16 @@
         </div>
       </NuxtLink>
 
+      <!-- Matching Game -->
+      <NuxtLink to="/matching" class="sq-card bg-white p-8 text-center cursor-pointer hover:bg-teal-50">
+        <div class="text-6xl mb-4">🔗</div>
+        <h2 class="text-2xl font-bold text-teal-600 mb-2">配對遊戲</h2>
+        <p class="text-gray-600">中英配對記憶</p>
+        <div class="mt-4">
+          <UBadge color="info" size="lg">Matching</UBadge>
+        </div>
+      </NuxtLink>
+
       <!-- Word Input -->
       <NuxtLink to="/input" class="sq-card bg-white p-8 text-center cursor-pointer hover:bg-purple-50">
         <div class="text-6xl mb-4">📷</div>
