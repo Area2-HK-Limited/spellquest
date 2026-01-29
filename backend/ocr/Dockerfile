@@ -1,13 +1,5 @@
 FROM python:3.11-slim
 
-# Install Tesseract OCR + 中英文語言包
-RUN apt-get update && apt-get install -y \
-    tesseract-ocr \
-    tesseract-ocr-chi-tra \
-    tesseract-ocr-chi-sim \
-    tesseract-ocr-eng \
-    && rm -rf /var/lib/apt/lists/*
-
 # Set working directory
 WORKDIR /app
 

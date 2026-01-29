@@ -1,20 +1,20 @@
 """
-SpellQuest OCR Service
-使用 Tesseract OCR 識別中英文混合文字
+SpellQuest OCR Service (Claude Vision)
+使用 GitHub Copilot API + Claude Sonnet 4.5 做 OCR
 """
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from PIL import Image
-import pytesseract
-import io
-import re
+import httpx
+import base64
+import os
 from typing import List, Dict, Any
+import json
 
 app = FastAPI(
-    title="SpellQuest OCR Service",
-    description="中英文 OCR 識別服務",
-    version="1.0.0"
+    title="SpellQuest OCR Service (Claude Vision)",
+    description="中英文 OCR 識別服務（使用 Claude Sonnet 4.5）",
+    version="2.0.0"
 )
 
 # CORS
@@ -26,11 +26,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# GitHub Copilot API
+GITHUB_COPILOT_API = "https://api.githubcopilot.com/chat/completions"
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+
+if not GITHUB_TOKEN:
+    raise ValueError("GITHUB_TOKEN 環境變數未設定！")
+
 
 @app.get("/")
 async def root():
     """Health check"""
-    return {"status": "ok", "service": "SpellQuest OCR"}
+    return {
+        "status": "ok",
+        "service": "SpellQuest OCR (Claude Vision)",
+        "model": "claude-sonnet-4.5"
+    }
 
 
 @app.post("/ocr/upload")
@@ -49,32 +60,25 @@ async def ocr_upload(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="只接受圖片檔案")
     
     try:
-        # Read image
+        # Read and encode image
         contents = await file.read()
-        image = Image.open(io.BytesIO(contents))
+        image_b64 = base64.b64encode(contents).decode('utf-8')
         
-        # OCR with Chinese + English
-        text = pytesseract.image_to_string(
-            image,
-            lang='chi_tra+eng',  # 繁體中文 + 英文
-            config='--psm 6'      # Assume uniform block of text
-        )
+        # Call Claude API
+        prompt = """
+請識別圖片中的所有文字，包括中文、英文、拼音。
+
+返回 JSON 格式：
+{
+  "text": "完整文字內容",
+  "words": ["詞語1", "詞語2", ...],
+  "lines": ["第一行", "第二行", ...]
+}
+"""
         
-        # Clean text
-        text = text.strip()
+        result = await call_claude_vision(image_b64, prompt)
         
-        # Split into lines
-        lines = [line.strip() for line in text.split('\n') if line.strip()]
-        
-        # Extract words (split by whitespace/punctuation)
-        words = extract_words(text)
-        
-        return {
-            "text": text,
-            "words": words,
-            "lines": lines,
-            "image_size": image.size
-        }
+        return result
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OCR 處理失敗: {str(e)}")
@@ -98,93 +102,130 @@ async def ocr_extract_vocab(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="只接受圖片檔案")
     
     try:
-        # Read image
+        # Read and encode image
         contents = await file.read()
-        image = Image.open(io.BytesIO(contents))
+        image_b64 = base64.b64encode(contents).decode('utf-8')
         
-        # OCR
-        text = pytesseract.image_to_string(
-            image,
-            lang='chi_tra+eng',
-            config='--psm 6'
-        )
+        # Call Claude API with structured prompt
+        prompt = """
+請識別圖片中的詞語列表，並提取每個詞語的：
+1. 中文
+2. 英文翻譯
+3. 拼音（如果有）
+
+常見格式：
+- "蘋果 apple píng guǒ"
+- "1. 蘋果 (apple) píng guǒ"
+- "蘋果 apple"
+
+返回 JSON 格式：
+{
+  "vocabulary": [
+    {
+      "chinese": "蘋果",
+      "english": "apple",
+      "pinyin": "píng guǒ"
+    },
+    ...
+  ]
+}
+
+注意：
+- 如果沒有拼音，pinyin 返回空字串
+- 忽略序號（1. 2. 等）
+- 每個詞語必須有中文
+"""
         
-        # Parse vocabulary
-        vocabulary = parse_vocabulary(text)
+        result = await call_claude_vision(image_b64, prompt)
         
-        return {
-            "vocabulary": vocabulary,
-            "raw_text": text
-        }
+        return result
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"詞語提取失敗: {str(e)}")
 
 
-def extract_words(text: str) -> List[str]:
+async def call_claude_vision(image_b64: str, prompt: str) -> Dict[str, Any]:
     """
-    從文字中提取詞語
-    """
-    # Remove punctuation but keep Chinese characters and English words
-    words = re.findall(r'[\u4e00-\u9fff]+|[a-zA-Z]+', text)
-    return list(set(words))  # Remove duplicates
-
-
-def parse_vocabulary(text: str) -> List[Dict[str, str]]:
-    """
-    智能解析詞語列表
-    支持格式:
-    - "蘋果 apple píng guǒ"
-    - "蘋果 (apple) píng guǒ"
-    - "1. 蘋果 apple"
-    """
-    vocabulary = []
-    lines = text.split('\n')
+    Call GitHub Copilot API with Claude Sonnet 4.5 Vision
     
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
+    Args:
+        image_b64: Base64 encoded image
+        prompt: Text prompt
         
-        # Remove numbering (1. 2. etc.)
-        line = re.sub(r'^\d+[\.\)]\s*', '', line)
+    Returns:
+        Parsed JSON response from Claude
+    """
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            GITHUB_COPILOT_API,
+            headers={
+                "Authorization": f"Bearer {GITHUB_TOKEN}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "claude-sonnet-4-20250514",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": "image/jpeg",
+                                    "data": image_b64
+                                }
+                            },
+                            {
+                                "type": "text",
+                                "text": prompt
+                            }
+                        ]
+                    }
+                ],
+                "temperature": 0.1,  # Low temperature for consistency
+                "max_tokens": 4000
+            }
+        )
         
-        # Try to extract Chinese, English, Pinyin
-        # Pattern: Chinese characters, followed by English, optionally followed by Pinyin
-        chinese_match = re.search(r'[\u4e00-\u9fff]+', line)
-        english_match = re.search(r'\b[a-zA-Z\s]+\b', line)
-        pinyin_match = re.search(r'[a-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+\s+[a-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+', line, re.IGNORECASE)
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Claude API 錯誤: {response.text}"
+            )
         
-        if chinese_match:
-            chinese = chinese_match.group().strip()
-            english = english_match.group().strip() if english_match else ""
-            pinyin = pinyin_match.group().strip() if pinyin_match else ""
-            
-            # Skip if too short
-            if len(chinese) < 2:
-                continue
-            
-            vocabulary.append({
-                "chinese": chinese,
-                "english": english,
-                "pinyin": pinyin
-            })
-    
-    return vocabulary
+        data = response.json()
+        
+        # Extract content from Claude response
+        content = data["choices"][0]["message"]["content"]
+        
+        # Parse JSON from content
+        # Claude may wrap JSON in markdown code blocks
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+        
+        result = json.loads(content)
+        
+        return result
 
 
 @app.get("/health")
 async def health_check():
     """健康檢查"""
     try:
-        # Test Tesseract is working
-        version = pytesseract.get_tesseract_version()
+        # Test GitHub token is set
+        if not GITHUB_TOKEN:
+            raise ValueError("GITHUB_TOKEN not set")
+        
         return {
             "status": "healthy",
-            "tesseract_version": str(version)
+            "model": "claude-sonnet-4.5",
+            "provider": "GitHub Copilot API"
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Tesseract 未正常運作: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Service 未正常運作: {str(e)}")
 
 
 if __name__ == "__main__":

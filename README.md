@@ -25,12 +25,29 @@
 
 ## 🚀 快速開始
 
+### 前置要求
+
+- Docker & Docker Compose
+- **GitHub Copilot Token** (用於 OCR 功能)
+
+### 取得 GitHub Token
+
+1. 登入 GitHub
+2. Settings → Developer settings → Personal access tokens
+3. Generate new token (classic)
+4. 勾選 `copilot` scope
+5. 複製 token（格式：`ghu_xxxxx`）
+
 ### 使用 Docker Compose（推薦）
 
 ```bash
 # Clone repo
 git clone https://github.com/Area2-HK-Limited/spellquest.git
 cd spellquest
+
+# 設定環境變數
+cp .env.example .env
+# 編輯 .env，填入你的 GITHUB_TOKEN
 
 # 一鍵啟動
 docker-compose up -d
@@ -82,7 +99,7 @@ npm run dev
 | API | PostgREST |
 | Database | PostgreSQL 15 |
 | TTS | Web Speech API |
-| OCR | Tesseract.js (planned) |
+| OCR | **Claude Sonnet 4.5 (via GitHub Copilot API)** |
 | Deploy | Docker Compose |
 
 ## 📁 項目結構
