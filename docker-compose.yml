@@ -1,0 +1,60 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: spellquest_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: spellquest123
+      POSTGRES_DB: spellquest
+      TZ: Asia/Hong_Kong
+      PGTZ: Asia/Hong_Kong
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./backend/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # PostgREST API
+  postgrest:
+    image: postgrest/postgrest:latest
+    container_name: spellquest_api
+    restart: always
+    environment:
+      PGRST_DB_URI: postgresql://postgres:spellquest123@postgres:5432/spellquest
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: web_anon
+      PGRST_JWT_SECRET: spellquest_super_secret_key_that_is_long_enough_32chars
+      TZ: Asia/Hong_Kong
+    ports:
+      - "3001:3000"
+    depends_on:
+      - postgres
+
+  # Nuxt Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: spellquest_web
+    restart: always
+    environment:
+      NUXT_PUBLIC_API_URL: http://localhost:3001
+      TZ: Asia/Hong_Kong
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgrest
+
+  # Adminer (Database Admin UI)
+  adminer:
+    image: adminer:latest
+    container_name: spellquest_adminer
+    restart: always
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
