@@ -136,15 +136,15 @@
     <div v-if="addedWords.length > 0" class="sq-card bg-white p-8">
       <h2 class="text-xl font-bold text-gray-700 mb-4">已新增詞語 ({{ addedWords.length }})</h2>
       
-      <div class="space-y-2">
+      <div class="space-y-2 max-h-64 overflow-y-auto">
         <div 
           v-for="(word, index) in addedWords" 
           :key="index"
           class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
         >
           <div>
-            <span class="text-xl font-bold text-purple-600">{{ word.chinese }}</span>
-            <span v-if="word.english" class="text-gray-500 ml-2">{{ word.english }}</span>
+            <span class="text-xl font-bold text-purple-600">{{ word.english || word.chinese }}</span>
+            <span v-if="word.chinese && word.english" class="text-gray-500 ml-2">{{ word.chinese }}</span>
             <span v-if="word.pinyin" class="text-gray-400 ml-2 text-sm">({{ word.pinyin }})</span>
           </div>
           <UButton @click="removeWord(index)" color="error" variant="ghost" size="sm">
@@ -153,18 +153,39 @@
         </div>
       </div>
       
-      <div class="mt-6 flex gap-4">
-        <UButton @click="saveWords" color="success" size="lg">
-          💾 儲存全部
-        </UButton>
-        <UButton @click="clearAll" color="neutral" size="lg">
-          清除全部
-        </UButton>
+      <!-- Action Buttons -->
+      <div class="mt-6 space-y-4">
+        <!-- Start Practice -->
+        <div class="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-4">
+          <h3 class="font-bold text-purple-700 mb-3">🎮 開始練習</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <UButton @click="startGame('spelling')" color="purple" size="lg" block>
+              🔤 英文串字
+            </UButton>
+            <UButton @click="startGame('dictation')" color="purple" size="lg" block>
+              🎯 聽寫模式
+            </UButton>
+            <UButton @click="startGame('sentence')" color="purple" variant="outline" size="lg" block>
+              📝 句子重組
+            </UButton>
+            <UButton @click="startGame('matching')" color="purple" variant="outline" size="lg" block>
+              🔗 配對遊戲
+            </UButton>
+          </div>
+        </div>
+        
+        <!-- Save/Clear -->
+        <div class="flex gap-4">
+          <UButton @click="saveWords" color="success" size="lg">
+            💾 儲存詞語
+          </UButton>
+          <UButton @click="clearAll" color="neutral" size="lg">
+            清除全部
+          </UButton>
+        </div>
       </div>
     </div>
 
-    <!-- Success Toast -->
-    <UNotifications />
   </div>
 </template>
 
@@ -297,14 +318,37 @@ const importOCRResult = () => {
   for (const line of lines) {
     // 跳過註釋行
     if (line.startsWith('#')) continue
+    if (!line.trim()) continue
     
     const parts = line.split(',').map(p => p.trim())
-    if (parts[0]) {
+    
+    // 支援多種格式：
+    // 1. 中文,英文,拼音 (原有格式)
+    // 2. 英文 (只有英文單詞)
+    // 3. 英文,中文 (英文在前)
+    
+    if (parts.length === 1) {
+      // 只有一個詞
+      const word = parts[0]
+      const isEnglish = /^[a-zA-Z\s]+$/.test(word)
       addedWords.value.push({
-        chinese: parts[0],
-        english: parts[1] || '',
+        chinese: isEnglish ? '' : word,
+        english: isEnglish ? word : '',
+        pinyin: '',
+        category: 'custom'
+      })
+      importCount++
+    } else if (parts.length >= 2) {
+      // 判斷第一個係中文定英文
+      const first = parts[0]
+      const second = parts[1]
+      const isFirstEnglish = /^[a-zA-Z\s]+$/.test(first)
+      
+      addedWords.value.push({
+        chinese: isFirstEnglish ? second : first,
+        english: isFirstEnglish ? first : second,
         pinyin: parts[2] || '',
-        category: 'general'
+        category: 'custom'
       })
       importCount++
     }
@@ -333,13 +377,31 @@ const addWord = () => {
 const addBatchWords = () => {
   const lines = batchInput.value.trim().split('\n')
   for (const line of lines) {
+    if (!line.trim()) continue
+    
     const parts = line.split(',').map(p => p.trim())
-    if (parts[0]) {
+    
+    if (parts.length === 1) {
+      // 只有一個詞 - 判斷係中文定英文
+      const word = parts[0]
+      const isEnglish = /^[a-zA-Z\s]+$/.test(word)
       addedWords.value.push({
-        chinese: parts[0],
-        english: parts[1] || '',
+        chinese: isEnglish ? '' : word,
+        english: isEnglish ? word : '',
+        pinyin: '',
+        category: 'custom'
+      })
+    } else if (parts[0]) {
+      // 多個 parts - 判斷格式
+      const first = parts[0]
+      const second = parts[1] || ''
+      const isFirstEnglish = /^[a-zA-Z\s]+$/.test(first)
+      
+      addedWords.value.push({
+        chinese: isFirstEnglish ? second : first,
+        english: isFirstEnglish ? first : second,
         pinyin: parts[2] || '',
-        category: 'general'
+        category: 'custom'
       })
     }
   }
@@ -355,9 +417,22 @@ const clearAll = () => {
 }
 
 const saveWords = async () => {
-  // TODO: Save to database via API
-  console.log('Saving words:', addedWords.value)
+  // Save to localStorage for persistence
+  localStorage.setItem('spellquest_custom_words', JSON.stringify(addedWords.value))
   alert(`已儲存 ${addedWords.value.length} 個詞語！`)
-  addedWords.value = []
+}
+
+const startGame = (gameType) => {
+  if (addedWords.value.length === 0) {
+    alert('請先新增詞語！')
+    return
+  }
+  
+  // Save words to localStorage for the game to use
+  localStorage.setItem('spellquest_practice_words', JSON.stringify(addedWords.value))
+  localStorage.setItem('spellquest_practice_mode', 'custom')
+  
+  // Navigate to game
+  navigateTo(`/${gameType}`)
 }
 </script>

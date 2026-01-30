@@ -15,13 +15,15 @@
 
     <!-- Game Area -->
     <div v-if="currentWord" class="sq-card bg-white p-8 text-center mb-8">
-      <!-- Chinese Word -->
-      <div class="text-5xl mb-2">{{ currentWord.chinese }}</div>
-      <div class="text-xl text-gray-500 mb-6">{{ currentWord.pinyin }}</div>
+      <!-- Word Display -->
+      <div v-if="currentWord.chinese" class="text-5xl mb-2">{{ currentWord.chinese }}</div>
+      <div v-else class="text-3xl mb-2 text-purple-600">🔊 聽發音，串英文字</div>
+      <div v-if="currentWord.pinyin" class="text-xl text-gray-500 mb-6">{{ currentWord.pinyin }}</div>
+      <div v-else-if="!currentWord.chinese" class="text-lg text-gray-400 mb-6">第 {{ currentIndex + 1 }} 個字</div>
       
       <!-- Speak Button -->
       <UButton 
-        @click="speak(currentWord.chinese)" 
+        @click="speakWord" 
         color="primary" 
         variant="outline"
         size="lg"
@@ -75,8 +77,21 @@
       </div>
 
       <!-- Feedback -->
-      <div v-if="feedback" class="text-2xl font-bold mb-6" :class="feedback === 'correct' ? 'text-green-600' : 'text-red-600'">
-        {{ feedback === 'correct' ? '✅ 正確！太棒了！' : '❌ 再試一次！' }}
+      <div v-if="feedback" class="mb-6">
+        <div class="text-2xl font-bold" :class="feedback === 'correct' ? 'text-green-600' : 'text-red-600'">
+          {{ feedback === 'correct' ? '✅ 正確！太棒了！' : '❌ 再試一次！' }}
+        </div>
+        
+        <!-- Memory Tip (shown after correct answer) -->
+        <div v-if="feedback === 'correct' && memoryTip" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-left">
+          <div class="flex items-start gap-2">
+            <span class="text-2xl">💡</span>
+            <div>
+              <p class="font-bold text-yellow-700 mb-1">記憶小貼士：</p>
+              <p class="text-yellow-800">{{ memoryTip }}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Actions -->
@@ -108,20 +123,114 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
-// Sample words (will be loaded from API later)
-const words = ref([
+// Default sample words
+const defaultWords = [
   { chinese: '蘋果', english: 'apple', pinyin: 'píng guǒ' },
   { chinese: '香蕉', english: 'banana', pinyin: 'xiāng jiāo' },
   { chinese: '橙', english: 'orange', pinyin: 'chéng' },
   { chinese: '書包', english: 'schoolbag', pinyin: 'shū bāo' },
   { chinese: '鉛筆', english: 'pencil', pinyin: 'qiān bǐ' }
-])
+]
+
+const words = ref([])
+const practiceMode = ref('default')
 
 const currentIndex = ref(0)
 const score = ref(0)
 const answer = ref([])
 const selectedIndexes = ref([])
 const feedback = ref(null)
+const memoryTip = ref('')
+
+// Memory tips for common words (can be expanded or replaced with AI)
+const memoryTips = {
+  // Common English words with memory tricks
+  'you': '你 (you) - 發音似「優」，你係最優秀嘅！',
+  'doing': 'do + ing = doing（正在做）- 記住 do 加 ing 就係進行式！',
+  'talking': 'talk + ing = talking（正在講）- talk 講嘢，加 ing 就係講緊嘢',
+  'reading': 'read + ing = reading（正在讀）- read 讀書，雙 e 要記住！',
+  'book': '書 - b-o-o-k，兩個 o 好似兩隻眼睇書 👀📖',
+  'running': 'run + n + ing = running - 跑步要雙寫 n！因為跑得好快 🏃',
+  'grass': 'gr + ass = grass（草）- 記住雙 s，草地好大片！',
+  'chatting': 'chat + t + ing = chatting - 傾偈要雙 t，因為兩個人傾！',
+  'riding': 'ride + ing = riding（踩緊）- 去掉 e 加 ing',
+  'bicycle': 'bi（二）+ cycle（圈）= 兩個轆！🚲',
+  'her': '佢（女）- h-e-r，三個字母，簡單易記！',
+  'sister': 'sis + ter = sister（姊妹）- sis 似「姐」嘅音',
+  'swimming': 'swim + m + ing = swimming - 游水要雙 m，因為雙手划水 🏊',
+  'pool': 'p-oo-l，兩個 o 好似泳池嘅水 💧',
+  'having': 'have + ing = having - 去掉 e 加 ing',
+  'fun': '好玩 - f-u-n，三個字母，fun fun fun！🎉',
+  'apple': 'a-p-p-l-e，兩個 p 好似蘋果嘅兩邊 🍎',
+  'banana': 'b-a-n-a-n-a，三個 a 好似三個香蕉彎彎 🍌',
+  'orange': 'or + ange = orange，橙色同橙都係呢個字！🍊'
+}
+
+// Generate memory tip for current word
+const generateMemoryTip = (word) => {
+  const english = word.english?.toLowerCase()
+  
+  // Check if we have a preset tip
+  if (english && memoryTips[english]) {
+    return memoryTips[english]
+  }
+  
+  // Generate basic tip based on word structure
+  if (english) {
+    const tips = []
+    
+    // Check for -ing words
+    if (english.endsWith('ing')) {
+      const base = english.slice(0, -3)
+      tips.push(`${base} + ing = ${english}（進行式）`)
+    }
+    
+    // Check for double letters
+    const doubles = english.match(/(.)\1/g)
+    if (doubles) {
+      tips.push(`注意雙字母：${doubles.join(', ')}`)
+    }
+    
+    // Word length tip
+    if (english.length <= 4) {
+      tips.push(`只有 ${english.length} 個字母，簡單易記！`)
+    }
+    
+    // Spelling it out
+    tips.push(`拼法：${english.split('').join('-').toUpperCase()}`)
+    
+    return tips.join(' | ')
+  }
+  
+  return ''
+}
+
+// Load words on mount
+onMounted(() => {
+  // Check if there are custom practice words
+  const customWords = localStorage.getItem('spellquest_practice_words')
+  const mode = localStorage.getItem('spellquest_practice_mode')
+  
+  if (mode === 'custom' && customWords) {
+    try {
+      const parsed = JSON.parse(customWords)
+      // Filter words that have english (for spelling game)
+      const validWords = parsed.filter(w => w.english && w.english.trim())
+      if (validWords.length > 0) {
+        words.value = validWords
+        practiceMode.value = 'custom'
+        // Clear the practice mode flag (one-time use)
+        localStorage.removeItem('spellquest_practice_mode')
+        return
+      }
+    } catch (e) {
+      console.error('Failed to parse custom words:', e)
+    }
+  }
+  
+  // Fall back to default words
+  words.value = defaultWords
+})
 
 const currentWord = computed(() => {
   return currentIndex.value < words.value.length ? words.value[currentIndex.value] : null
@@ -172,10 +281,13 @@ const checkAnswer = () => {
   if (userAnswer === correctAnswer) {
     feedback.value = 'correct'
     score.value++
+    // Generate memory tip
+    memoryTip.value = generateMemoryTip(currentWord.value)
     // Speak the word
     speak(currentWord.value.english, 'en-US')
   } else {
     feedback.value = 'wrong'
+    memoryTip.value = ''
   }
 }
 
@@ -184,6 +296,7 @@ const nextWord = () => {
   answer.value = []
   selectedIndexes.value = []
   feedback.value = null
+  memoryTip.value = ''
 }
 
 const restart = () => {
@@ -200,6 +313,16 @@ const speak = (text, lang = 'zh-TW') => {
     utterance.lang = lang
     utterance.rate = 0.8
     window.speechSynthesis.speak(utterance)
+  }
+}
+
+const speakWord = () => {
+  if (!currentWord.value) return
+  // For English-only words, speak English; otherwise speak Chinese
+  if (currentWord.value.chinese) {
+    speak(currentWord.value.chinese, 'zh-TW')
+  } else {
+    speak(currentWord.value.english, 'en-US')
   }
 }
 </script>

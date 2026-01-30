@@ -136,9 +136,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 
-const words = ref([
+// Default sample words
+const defaultWords = [
   { chinese: '蘋果', english: 'apple', pinyin: 'píng guǒ' },
   { chinese: '香蕉', english: 'banana', pinyin: 'xiāng jiāo' },
   { chinese: '橙', english: 'orange', pinyin: 'chéng' },
@@ -149,9 +150,12 @@ const words = ref([
   { chinese: '爸爸', english: 'father', pinyin: 'bà ba' },
   { chinese: '媽媽', english: 'mother', pinyin: 'mā ma' },
   { chinese: '太陽', english: 'sun', pinyin: 'tài yáng' }
-])
+]
 
-const mode = ref('chinese') // 'chinese' = 聽英文寫中文, 'english' = 聽中文寫英文
+const words = ref([])
+const practiceMode = ref('default')
+
+const mode = ref('english') // 'chinese' = 聽英文寫中文, 'english' = 聽中文寫英文
 const currentIndex = ref(0)
 const score = ref(0)
 const userAnswer = ref('')
@@ -159,6 +163,33 @@ const feedback = ref(null)
 const showHint = ref(false)
 const playCount = ref(0)
 const attempts = ref(0)
+
+// Load words on mount
+onMounted(() => {
+  // Check if there are custom practice words
+  const customWords = localStorage.getItem('spellquest_practice_words')
+  const modeFlag = localStorage.getItem('spellquest_practice_mode')
+  
+  if (modeFlag === 'custom' && customWords) {
+    try {
+      const parsed = JSON.parse(customWords)
+      // Filter words that have english (for dictation game)
+      const validWords = parsed.filter(w => w.english && w.english.trim())
+      if (validWords.length > 0) {
+        words.value = validWords
+        practiceMode.value = 'custom'
+        // Clear the practice mode flag (one-time use)
+        localStorage.removeItem('spellquest_practice_mode')
+        return
+      }
+    } catch (e) {
+      console.error('Failed to parse custom words:', e)
+    }
+  }
+  
+  // Fall back to default words
+  words.value = defaultWords
+})
 
 const currentWord = computed(() => {
   return currentIndex.value < words.value.length ? words.value[currentIndex.value] : null
