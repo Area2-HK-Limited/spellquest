@@ -1,7 +1,10 @@
 // composables/useAPI.ts
 import { ref } from 'vue'
 
-const API_BASE = 'http://localhost:3001'
+// API endpoint - can use M01's server for testing
+const API_BASE = process.env.NODE_ENV === 'production' 
+  ? 'http://localhost:3001' 
+  : 'http://192.168.139.40:3001' // M01's server for development
 
 interface Word {
   id: number
