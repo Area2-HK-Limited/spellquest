@@ -172,14 +172,17 @@ BEGIN
             SELECT COUNT(*) FROM learning_records WHERE correct = true
         ),
         'overall_accuracy', (
-            SELECT ROUND(
-                100.0 * COUNT(CASE WHEN correct THEN 1 END) / COUNT(*),
-                2
+            SELECT COALESCE(
+                ROUND(
+                    100.0 * COUNT(CASE WHEN correct THEN 1 END) / NULLIF(COUNT(*), 0),
+                    2
+                ),
+                0
             )
             FROM learning_records
         ),
         'total_time_hours', (
-            SELECT ROUND(SUM(time_spent_ms) / 3600000.0, 2)
+            SELECT COALESCE(ROUND(SUM(time_spent_ms) / 3600000.0, 2), 0)
             FROM learning_records
         ),
         'streak_days', (
