@@ -192,6 +192,13 @@
 <script setup>
 import { ref } from 'vue'
 
+// Toast notification helper
+const showToast = (message) => {
+  // Simple alert for now - can be replaced with proper toast library
+  // TODO: Replace with UNotification or vue-toastification
+  alert(message)
+}
+
 const newWord = ref({
   chinese: '',
   english: '',
@@ -310,15 +317,25 @@ const processOCR = async () => {
 }
 
 const importOCRResult = () => {
-  if (!ocrResult.value.trim()) return
+  if (!ocrResult.value.trim()) {
+    alert('❌ 未有識別結果')
+    return
+  }
   
   const lines = ocrResult.value.trim().split('\n')
   let importCount = 0
+  let skippedCount = 0
   
   for (const line of lines) {
     // 跳過註釋行
-    if (line.startsWith('#')) continue
-    if (!line.trim()) continue
+    if (line.startsWith('#')) {
+      skippedCount++
+      continue
+    }
+    if (!line.trim()) {
+      skippedCount++
+      continue
+    }
     
     const parts = line.split(',').map(p => p.trim())
     
@@ -330,6 +347,10 @@ const importOCRResult = () => {
     if (parts.length === 1) {
       // 只有一個詞
       const word = parts[0]
+      if (!word) {
+        skippedCount++
+        continue
+      }
       const isEnglish = /^[a-zA-Z\s]+$/.test(word)
       addedWords.value.push({
         chinese: isEnglish ? '' : word,
@@ -342,6 +363,10 @@ const importOCRResult = () => {
       // 判斷第一個係中文定英文
       const first = parts[0]
       const second = parts[1]
+      if (!first && !second) {
+        skippedCount++
+        continue
+      }
       const isFirstEnglish = /^[a-zA-Z\s]+$/.test(first)
       
       addedWords.value.push({
@@ -355,27 +380,47 @@ const importOCRResult = () => {
   }
   
   if (importCount > 0) {
-    alert(`已匯入 ${importCount} 個詞語！`)
+    showToast(`✅ 已匯入 ${importCount} 個詞語${skippedCount > 0 ? `，跳過 ${skippedCount} 行` : ''}！`)
     ocrResult.value = ''
     selectedImage.value = null
     selectedFile.value = null
+  } else {
+    alert('❌ 無法匯入任何詞語，請檢查格式')
   }
 }
 
 const addWord = () => {
-  if (newWord.value.chinese.trim()) {
-    addedWords.value.push({ ...newWord.value })
-    newWord.value = {
-      chinese: '',
-      english: '',
-      pinyin: '',
-      category: 'general'
-    }
+  // Validation: at least one of chinese or english must be filled
+  if (!newWord.value.chinese.trim() && !newWord.value.english.trim()) {
+    alert('請輸入中文或英文！')
+    return
+  }
+  
+  addedWords.value.push({ ...newWord.value })
+  
+  // Success feedback
+  const wordDisplay = newWord.value.english || newWord.value.chinese
+  showToast(`✅ 已新增詞語：${wordDisplay}`)
+  
+  // Reset form
+  newWord.value = {
+    chinese: '',
+    english: '',
+    pinyin: '',
+    category: 'general'
   }
 }
 
 const addBatchWords = () => {
+  if (!batchInput.value.trim()) {
+    alert('請輸入詞語！')
+    return
+  }
+  
   const lines = batchInput.value.trim().split('\n')
+  let importCount = 0
+  let skippedCount = 0
+  
   for (const line of lines) {
     if (!line.trim()) continue
     
@@ -384,6 +429,10 @@ const addBatchWords = () => {
     if (parts.length === 1) {
       // 只有一個詞 - 判斷係中文定英文
       const word = parts[0]
+      if (!word) {
+        skippedCount++
+        continue
+      }
       const isEnglish = /^[a-zA-Z\s]+$/.test(word)
       addedWords.value.push({
         chinese: isEnglish ? '' : word,
@@ -391,6 +440,7 @@ const addBatchWords = () => {
         pinyin: '',
         category: 'custom'
       })
+      importCount++
     } else if (parts[0]) {
       // 多個 parts - 判斷格式
       const first = parts[0]
@@ -403,34 +453,56 @@ const addBatchWords = () => {
         pinyin: parts[2] || '',
         category: 'custom'
       })
+      importCount++
     }
   }
-  batchInput.value = ''
+  
+  if (importCount > 0) {
+    showToast(`✅ 已批量新增 ${importCount} 個詞語${skippedCount > 0 ? `，跳過 ${skippedCount} 行` : ''}！`)
+    batchInput.value = ''
+  } else {
+    alert('❌ 無法識別任何詞語，請檢查格式')
+  }
 }
 
 const removeWord = (index) => {
+  const word = addedWords.value[index]
+  const wordDisplay = word.english || word.chinese
   addedWords.value.splice(index, 1)
+  showToast(`🗑️ 已刪除：${wordDisplay}`)
 }
 
 const clearAll = () => {
-  addedWords.value = []
+  if (addedWords.value.length === 0) return
+  
+  if (confirm(`確定要清除全部 ${addedWords.value.length} 個詞語？`)) {
+    addedWords.value = []
+    showToast('🗑️ 已清除全部詞語')
+  }
 }
 
 const saveWords = async () => {
+  if (addedWords.value.length === 0) {
+    alert('❌ 未有詞語可儲存')
+    return
+  }
+  
   // Save to localStorage for persistence
   localStorage.setItem('spellquest_custom_words', JSON.stringify(addedWords.value))
-  alert(`已儲存 ${addedWords.value.length} 個詞語！`)
+  showToast(`💾 已儲存 ${addedWords.value.length} 個詞語！`)
 }
 
 const startGame = (gameType) => {
   if (addedWords.value.length === 0) {
-    alert('請先新增詞語！')
+    alert('❌ 請先新增詞語！')
     return
   }
   
   // Save words to localStorage for the game to use
   localStorage.setItem('spellquest_practice_words', JSON.stringify(addedWords.value))
   localStorage.setItem('spellquest_practice_mode', 'custom')
+  
+  showToast(`🎮 開始遊戲：${gameType}`)
   
   // Navigate to game
   navigateTo(`/${gameType}`)
