@@ -14,7 +14,8 @@ services:
       - "5432:5432"
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
-      - ./backend/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backend/sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./backend/sql/functions.sql:/docker-entrypoint-initdb.d/02-functions.sql
 
   # PostgREST API
   postgrest:
