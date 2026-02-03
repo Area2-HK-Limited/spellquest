@@ -1,104 +1,133 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <!-- Header -->
-    <div class="text-center mb-12">
-      <h1 class="text-5xl font-bold text-indigo-600 mb-4">
-        🎮 SpellQuest
-      </h1>
-      <p class="text-2xl text-gray-600">默書小勇士</p>
-      <p class="text-lg text-gray-500 mt-2">選擇一個遊戲開始溫習！</p>
+  <UContainer>
+    <div class="py-8">
+      <!-- Header -->
+      <UPageHeader
+        title="🎮 SpellQuest"
+        description="默書小勇士 - 選擇一個遊戲開始溫習！"
+        class="mb-12"
+      />
+
+      <!-- Game Cards Grid -->
+      <ULandingGrid>
+        <!-- Spelling Game -->
+        <ULandingCard
+          to="/spelling"
+          title="英文串字"
+          description="睇中文，串英文"
+          icon="i-heroicons-language"
+          color="primary"
+        >
+          <template #icon>
+            <div class="text-6xl">🔤</div>
+          </template>
+        </ULandingCard>
+
+        <!-- Sentence Game -->
+        <ULandingCard
+          to="/sentence"
+          title="句子重組"
+          description="排列正確句子順序"
+          icon="i-heroicons-document-text"
+          color="green"
+        >
+          <template #icon>
+            <div class="text-6xl">📝</div>
+          </template>
+        </ULandingCard>
+
+        <!-- Flashcard Game -->
+        <ULandingCard
+          to="/flashcard"
+          title="中文認字"
+          description="翻卡記憶遊戲"
+          icon="i-heroicons-academic-cap"
+          color="amber"
+        >
+          <template #icon>
+            <div class="text-6xl">✏️</div>
+          </template>
+        </ULandingCard>
+
+        <!-- Matching Game -->
+        <ULandingCard
+          to="/matching"
+          title="配對遊戲"
+          description="中英配對記憶"
+          icon="i-heroicons-puzzle-piece"
+          color="teal"
+        >
+          <template #icon>
+            <div class="text-6xl">🔗</div>
+          </template>
+        </ULandingCard>
+
+        <!-- Word Input -->
+        <ULandingCard
+          to="/input"
+          title="輸入詞語"
+          description="新增溫習內容"
+          icon="i-heroicons-camera"
+          color="purple"
+        >
+          <template #icon>
+            <div class="text-6xl">📷</div>
+          </template>
+        </ULandingCard>
+
+        <!-- Word List -->
+        <ULandingCard
+          to="/words"
+          title="詞語列表"
+          description="查看所有詞語"
+          icon="i-heroicons-book-open"
+          color="cyan"
+        >
+          <template #icon>
+            <div class="text-6xl">📚</div>
+          </template>
+        </ULandingCard>
+
+        <!-- Dictation -->
+        <ULandingCard
+          to="/dictation"
+          title="聽寫模式"
+          description="聽發音，寫答案"
+          icon="i-heroicons-speaker-wave"
+          color="pink"
+        >
+          <template #icon>
+            <div class="text-6xl">🎯</div>
+          </template>
+        </ULandingCard>
+
+        <!-- Stats -->
+        <ULandingCard
+          to="/stats"
+          title="學習進度"
+          description="睇下學咗幾多"
+          icon="i-heroicons-chart-bar"
+          color="rose"
+        >
+          <template #icon>
+            <div class="text-6xl">📊</div>
+          </template>
+        </ULandingCard>
+      </ULandingGrid>
+
+      <!-- Footer -->
+      <div class="text-center mt-12">
+        <UAlert
+          color="primary"
+          variant="subtle"
+          title="Made with ❤️ for 沛晨"
+          icon="i-heroicons-heart"
+        />
+      </div>
     </div>
-
-    <!-- Game Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
-      <!-- Spelling Game -->
-      <NuxtLink to="/spelling" class="sq-card bg-white p-8 text-center cursor-pointer hover:bg-indigo-50">
-        <div class="text-6xl mb-4">🔤</div>
-        <h2 class="text-2xl font-bold text-indigo-600 mb-2">英文串字</h2>
-        <p class="text-gray-600">睇中文，串英文</p>
-        <div class="mt-4">
-          <UBadge color="primary" size="lg">Spelling</UBadge>
-        </div>
-      </NuxtLink>
-
-      <!-- Sentence Game -->
-      <NuxtLink to="/sentence" class="sq-card bg-white p-8 text-center cursor-pointer hover:bg-green-50">
-        <div class="text-6xl mb-4">📝</div>
-        <h2 class="text-2xl font-bold text-green-600 mb-2">句子重組</h2>
-        <p class="text-gray-600">排列正確句子順序</p>
-        <div class="mt-4">
-          <UBadge color="success" size="lg">Sentence</UBadge>
-        </div>
-      </NuxtLink>
-
-      <!-- Flashcard Game -->
-      <NuxtLink to="/flashcard" class="sq-card bg-white p-8 text-center cursor-pointer hover:bg-amber-50">
-        <div class="text-6xl mb-4">✏️</div>
-        <h2 class="text-2xl font-bold text-amber-600 mb-2">中文認字</h2>
-        <p class="text-gray-600">翻卡記憶遊戲</p>
-        <div class="mt-4">
-          <UBadge color="warning" size="lg">Flashcard</UBadge>
-        </div>
-      </NuxtLink>
-
-      <!-- Matching Game -->
-      <NuxtLink to="/matching" class="sq-card bg-white p-8 text-center cursor-pointer hover:bg-teal-50">
-        <div class="text-6xl mb-4">🔗</div>
-        <h2 class="text-2xl font-bold text-teal-600 mb-2">配對遊戲</h2>
-        <p class="text-gray-600">中英配對記憶</p>
-        <div class="mt-4">
-          <UBadge color="info" size="lg">Matching</UBadge>
-        </div>
-      </NuxtLink>
-
-      <!-- Word Input -->
-      <NuxtLink to="/input" class="sq-card bg-white p-8 text-center cursor-pointer hover:bg-purple-50">
-        <div class="text-6xl mb-4">📷</div>
-        <h2 class="text-2xl font-bold text-purple-600 mb-2">輸入詞語</h2>
-        <p class="text-gray-600">新增溫習內容</p>
-        <div class="mt-4">
-          <UBadge color="violet" size="lg">Input</UBadge>
-        </div>
-      </NuxtLink>
-
-      <!-- Word List -->
-      <NuxtLink to="/words" class="sq-card bg-white p-8 text-center cursor-pointer hover:bg-cyan-50">
-        <div class="text-6xl mb-4">📚</div>
-        <h2 class="text-2xl font-bold text-cyan-600 mb-2">詞語列表</h2>
-        <p class="text-gray-600">查看所有詞語</p>
-        <div class="mt-4">
-          <UBadge color="info" size="lg">Words</UBadge>
-        </div>
-      </NuxtLink>
-
-      <!-- Dictation -->
-      <NuxtLink to="/dictation" class="sq-card bg-white p-8 text-center cursor-pointer hover:bg-pink-50">
-        <div class="text-6xl mb-4">🎯</div>
-        <h2 class="text-2xl font-bold text-pink-600 mb-2">聽寫模式</h2>
-        <p class="text-gray-600">聽發音，寫答案</p>
-        <div class="mt-4">
-          <UBadge color="pink" size="lg">Dictation</UBadge>
-        </div>
-      </NuxtLink>
-
-      <!-- Stats -->
-      <NuxtLink to="/stats" class="sq-card bg-white p-8 text-center cursor-pointer hover:bg-rose-50">
-        <div class="text-6xl mb-4">📊</div>
-        <h2 class="text-2xl font-bold text-rose-600 mb-2">學習進度</h2>
-        <p class="text-gray-600">睇下學咗幾多</p>
-        <div class="mt-4">
-          <UBadge color="error" size="lg">Stats</UBadge>
-        </div>
-      </NuxtLink>
-    </div>
-
-    <!-- Footer -->
-    <div class="text-center mt-12 text-gray-500">
-      <p>Made with ❤️ for 沛晨</p>
-    </div>
-  </div>
+  </UContainer>
 </template>
 
 <script setup>
-// Home page - no special logic needed
+// Home page - clean and simple with Nuxt UI Pro
 </script>
