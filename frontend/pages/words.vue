@@ -177,10 +177,10 @@ const filterCategory = ref('')
 
 // Table columns (removed pinyin column)
 const columns = [
-  { key: 'english', label: '英文', sortable: true },
-  { key: 'chinese', label: '中文' },
-  { key: 'category', label: '分類' },
-  { key: 'actions', label: '操作' }
+  { id: 'english', key: 'english', label: '英文', sortable: true },
+  { id: 'chinese', key: 'chinese', label: '中文' },
+  { id: 'category', key: 'category', label: '分類' },
+  { id: 'actions', key: 'actions', label: '操作' }
 ]
 
 const categoryOptions = [
