@@ -26,8 +26,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Alibaba DashScope API
-DASHSCOPE_API = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+# Alibaba DashScope API (International - Singapore)
+DASHSCOPE_API = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions"
 DASHSCOPE_API_KEY = os.environ.get("DASHSCOPE_API_KEY") or os.environ.get("QWEN_API_KEY")
 
 if not DASHSCOPE_API_KEY:
