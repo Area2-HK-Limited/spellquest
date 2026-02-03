@@ -3,8 +3,8 @@
  * 處理 multipart form data，forward 去 backend OCR service，然後自動儲存到 DB
  */
 
-// PostgREST URL (Docker internal network)
-const POSTGREST_URL = process.env.POSTGREST_URL || 'http://spellquest_api:3001'
+// PostgREST URL (Docker internal network - container uses port 3000)
+const POSTGREST_URL = process.env.POSTGREST_URL || 'http://spellquest_api:3000'
 
 interface VocabularyItem {
   chinese?: string
