@@ -1,133 +1,110 @@
-<template>
-  <UContainer>
-    <div class="py-8">
-      <!-- Header -->
-      <UPageHeader
-        title="🎮 SpellQuest"
-        description="默書小勇士 - 選擇一個遊戲開始溫習！"
-        class="mb-12"
-      />
+<script setup lang="ts">
+// Game cards data
+const games = [
+  {
+    title: '🔤 英文串字',
+    description: '睇中文，串英文',
+    to: '/spelling',
+    color: 'primary' as const
+  },
+  {
+    title: '📝 句子重組',
+    description: '排列正確句子順序',
+    to: '/sentence',
+    color: 'green' as const
+  },
+  {
+    title: '✏️ 中文認字',
+    description: '翻卡記憶遊戲',
+    to: '/flashcard',
+    color: 'amber' as const
+  },
+  {
+    title: '🔗 配對遊戲',
+    description: '中英配對記憶',
+    to: '/matching',
+    color: 'teal' as const
+  },
+  {
+    title: '🎯 聽寫模式',
+    description: '聽發音，寫答案',
+    to: '/dictation',
+    color: 'pink' as const
+  }
+]
 
-      <!-- Game Cards Grid -->
-      <ULandingGrid>
-        <!-- Spelling Game -->
-        <ULandingCard
-          to="/spelling"
-          title="英文串字"
-          description="睇中文，串英文"
-          icon="i-heroicons-language"
-          color="primary"
-        >
-          <template #icon>
-            <div class="text-6xl">🔤</div>
-          </template>
-        </ULandingCard>
-
-        <!-- Sentence Game -->
-        <ULandingCard
-          to="/sentence"
-          title="句子重組"
-          description="排列正確句子順序"
-          icon="i-heroicons-document-text"
-          color="green"
-        >
-          <template #icon>
-            <div class="text-6xl">📝</div>
-          </template>
-        </ULandingCard>
-
-        <!-- Flashcard Game -->
-        <ULandingCard
-          to="/flashcard"
-          title="中文認字"
-          description="翻卡記憶遊戲"
-          icon="i-heroicons-academic-cap"
-          color="amber"
-        >
-          <template #icon>
-            <div class="text-6xl">✏️</div>
-          </template>
-        </ULandingCard>
-
-        <!-- Matching Game -->
-        <ULandingCard
-          to="/matching"
-          title="配對遊戲"
-          description="中英配對記憶"
-          icon="i-heroicons-puzzle-piece"
-          color="teal"
-        >
-          <template #icon>
-            <div class="text-6xl">🔗</div>
-          </template>
-        </ULandingCard>
-
-        <!-- Word Input -->
-        <ULandingCard
-          to="/input"
-          title="輸入詞語"
-          description="新增溫習內容"
-          icon="i-heroicons-camera"
-          color="purple"
-        >
-          <template #icon>
-            <div class="text-6xl">📷</div>
-          </template>
-        </ULandingCard>
-
-        <!-- Word List -->
-        <ULandingCard
-          to="/words"
-          title="詞語列表"
-          description="查看所有詞語"
-          icon="i-heroicons-book-open"
-          color="cyan"
-        >
-          <template #icon>
-            <div class="text-6xl">📚</div>
-          </template>
-        </ULandingCard>
-
-        <!-- Dictation -->
-        <ULandingCard
-          to="/dictation"
-          title="聽寫模式"
-          description="聽發音，寫答案"
-          icon="i-heroicons-speaker-wave"
-          color="pink"
-        >
-          <template #icon>
-            <div class="text-6xl">🎯</div>
-          </template>
-        </ULandingCard>
-
-        <!-- Stats -->
-        <ULandingCard
-          to="/stats"
-          title="學習進度"
-          description="睇下學咗幾多"
-          icon="i-heroicons-chart-bar"
-          color="rose"
-        >
-          <template #icon>
-            <div class="text-6xl">📊</div>
-          </template>
-        </ULandingCard>
-      </ULandingGrid>
-
-      <!-- Footer -->
-      <div class="text-center mt-12">
-        <UAlert
-          color="primary"
-          variant="subtle"
-          title="Made with ❤️ for 沛晨"
-          icon="i-heroicons-heart"
-        />
-      </div>
-    </div>
-  </UContainer>
-</template>
-
-<script setup>
-// Home page - clean and simple with Nuxt UI Pro
+const tools = [
+  {
+    title: '📷 輸入詞語',
+    description: '拍照或手動新增詞語',
+    to: '/input',
+    color: 'purple' as const
+  },
+  {
+    title: '📚 詞語列表',
+    description: '查看及管理所有詞語',
+    to: '/words',
+    color: 'cyan' as const
+  }
+]
 </script>
+
+<template>
+  <UDashboardPanel id="home">
+    <template #header>
+      <UDashboardNavbar title="🎮 SpellQuest 默書小勇士">
+        <template #leading>
+          <UDashboardSidebarCollapse />
+        </template>
+      </UDashboardNavbar>
+    </template>
+
+    <template #body>
+      <div class="p-6 space-y-8">
+        <!-- Hero Section -->
+        <div class="text-center mb-8">
+          <h1 class="text-3xl font-bold mb-2">歡迎返嚟！👋</h1>
+          <p class="text-gray-500">選擇一個遊戲開始溫習</p>
+        </div>
+
+        <!-- Games Section -->
+        <div>
+          <h2 class="text-xl font-semibold mb-4">🎮 遊戲模式</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <UCard
+              v-for="game in games"
+              :key="game.to"
+              :to="game.to"
+              class="hover:shadow-lg transition-shadow cursor-pointer"
+            >
+              <div class="text-center py-4">
+                <div class="text-4xl mb-3">{{ game.title.split(' ')[0] }}</div>
+                <h3 class="font-bold text-lg">{{ game.title.split(' ').slice(1).join(' ') }}</h3>
+                <p class="text-gray-500 text-sm mt-1">{{ game.description }}</p>
+              </div>
+            </UCard>
+          </div>
+        </div>
+
+        <!-- Tools Section -->
+        <div>
+          <h2 class="text-xl font-semibold mb-4">🛠️ 工具</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <UCard
+              v-for="tool in tools"
+              :key="tool.to"
+              :to="tool.to"
+              class="hover:shadow-lg transition-shadow cursor-pointer"
+            >
+              <div class="text-center py-4">
+                <div class="text-4xl mb-3">{{ tool.title.split(' ')[0] }}</div>
+                <h3 class="font-bold text-lg">{{ tool.title.split(' ').slice(1).join(' ') }}</h3>
+                <p class="text-gray-500 text-sm mt-1">{{ tool.description }}</p>
+              </div>
+            </UCard>
+          </div>
+        </div>
+      </div>
+    </template>
+  </UDashboardPanel>
+</template>
