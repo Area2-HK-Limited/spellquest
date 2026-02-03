@@ -4,6 +4,7 @@
 
 | 檔案 | Provider | API Key 需求 | Accuracy | Cost |
 |------|----------|--------------|----------|------|
+| `main_alicloud_qwen3.py` | **AliCloud Qwen3-VL** | `DASHSCOPE_API_KEY` | ⭐⭐⭐⭐⭐ | $ |
 | `main_anthropic.py` | Anthropic Claude | `ANTHROPIC_API_KEY` | ⭐⭐⭐⭐⭐ | $$$ |
 | `main_openai.py` | OpenAI GPT-4o | `OPENAI_API_KEY` | ⭐⭐⭐⭐⭐ | $$$ |
 | `main_tesseract.py` | Tesseract OCR | ❌ 免費 | ⭐⭐⭐ | 免費 |
@@ -11,9 +12,58 @@
 
 ---
 
+## 🎯 推薦：AliCloud Qwen3-VL（Eric 已提供 API Key）
+
+**優點：**
+- ✅ 支援 32 種語言 OCR（包括中英文）
+- ✅ Eric 已經提供 API Key
+- ✅ 成本較低（相比 Anthropic/OpenAI）
+- ✅ 速度快
+- ✅ 準確度高
+
+**API Key:**
+```
+sk-d27e3f1d31504e51bf7d4623e51df5f0
+```
+
+---
+
 ## 使用方法
 
-### Option 1: Anthropic Claude API（推薦）
+### ⭐ Option 0: AliCloud Qwen3-VL（推薦 - Eric 已提供 API Key）
+
+**Eric 已經提供：**
+- API Key: `sk-d27e3f1d31504e51bf7d4623e51df5f0`
+- Region: Singapore (ap-southeast-1)
+- Model: `qwen3-vl-plus`
+
+**設定步驟：**
+
+1. **設定環境變數:**
+   ```bash
+   export DASHSCOPE_API_KEY="sk-d27e3f1d31504e51bf7d4623e51df5f0"
+   ```
+
+2. **替換 main.py:**
+   ```bash
+   cd backend/ocr
+   cp main_alicloud_qwen3.py main.py
+   ```
+
+3. **Restart service:**
+   ```bash
+   docker-compose restart ocr
+   ```
+
+**優點：**
+- ✅ Eric 已經有 API key
+- ✅ 成本較低（相比 Anthropic/OpenAI）
+- ✅ 支援 32 種語言（包括中英文）
+- ✅ 速度快
+
+---
+
+### Option 1: Anthropic Claude API
 
 1. **取得 API Key:**
    - 去 https://console.anthropic.com/
