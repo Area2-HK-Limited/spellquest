@@ -281,10 +281,10 @@ const processOCR = async () => {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
     
-    const ocrApiUrl = useRuntimeConfig().public.ocrApiUrl || '/api/ocr'
+    const ocrApiUrl = '/api'
     
     try {
-      const response = await fetch(`${ocrApiUrl}/ocr/extract-vocab`, {
+      const response = await fetch(`${ocrApiUrl}/ocr`, {
         method: 'POST',
         body: formData
       })
