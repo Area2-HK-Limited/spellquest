@@ -1,219 +1,232 @@
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-2xl">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
-      <NuxtLink to="/" class="text-2xl">← 返回</NuxtLink>
-      <div class="text-center">
-        <h1 class="text-3xl font-bold text-purple-600">📷 輸入詞語</h1>
-        <p class="text-gray-600">新增溫習內容</p>
-      </div>
-      <div></div>
-    </div>
-
-    <!-- Input Form -->
-    <div class="sq-card bg-white p-8 mb-8">
-      <h2 class="text-xl font-bold text-gray-700 mb-6">手動輸入詞語</h2>
-      
-      <form @submit.prevent="addWord" class="space-y-4">
-        <UFormField label="中文" required>
-          <UInput v-model="newWord.chinese" placeholder="例如：蘋果" size="lg" />
-        </UFormField>
-        
-        <UFormField label="英文">
-          <UInput v-model="newWord.english" placeholder="例如：apple" size="lg" />
-        </UFormField>
-        
-        <UFormField label="拼音">
-          <UInput v-model="newWord.pinyin" placeholder="例如：píng guǒ" size="lg" />
-        </UFormField>
-        
-        <UFormField label="分類">
-          <USelect v-model="newWord.category" :options="categories" size="lg" />
-        </UFormField>
-        
-        <div class="pt-4">
-          <UButton type="submit" color="purple" size="lg" block>
-            ➕ 新增詞語
-          </UButton>
-        </div>
-      </form>
-    </div>
-
-    <!-- Batch Input -->
-    <div class="sq-card bg-white p-8 mb-8">
-      <h2 class="text-xl font-bold text-gray-700 mb-4">批量輸入</h2>
-      <p class="text-gray-700 mb-4">每行一個詞語，格式：中文,英文,拼音</p>
-      
-      <UTextarea 
-        v-model="batchInput" 
-        placeholder="蘋果,apple,píng guǒ
-香蕉,banana,xiāng jiāo
-橙,orange,chéng"
-        :rows="6"
-        class="mb-4"
-      />
-      
-      <UButton @click="addBatchWords" color="purple" variant="outline" size="lg">
-        📥 批量新增
-      </UButton>
-    </div>
-
-    <!-- OCR Input -->
-    <div class="sq-card bg-white p-8 mb-8">
-      <h2 class="text-xl font-bold text-gray-700 mb-4">📷 OCR 相片輸入</h2>
-      <p class="text-gray-700 mb-4">影相或上傳溫習範圍，AI 自動識別文字</p>
-      
-      <!-- Upload Area -->
-      <div 
-        class="border-2 border-dashed rounded-xl p-8 text-center transition-all"
-        :class="isDragging ? 'border-purple-500 bg-purple-50' : 'border-gray-300'"
-        @dragover.prevent="isDragging = true"
-        @dragleave.prevent="isDragging = false"
-        @drop.prevent="handleDrop"
+  <UContainer>
+    <div class="py-8">
+      <!-- Header -->
+      <UPageHeader
+        title="📷 輸入詞語"
+        description="新增溫習內容"
       >
-        <input 
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          class="hidden"
-          @change="handleFileSelect"
-        />
-        <input 
-          ref="cameraInput"
-          type="file"
-          accept="image/*"
-          capture="environment"
-          class="hidden"
-          @change="handleFileSelect"
-        />
+        <template #links>
+          <UButton to="/" variant="ghost" icon="i-heroicons-arrow-left">返回</UButton>
+        </template>
+      </UPageHeader>
+
+      <!-- Success Alert -->
+      <UAlert
+        v-if="successMessage"
+        color="green"
+        variant="subtle"
+        :title="successMessage"
+        icon="i-heroicons-check-circle"
+        class="mb-6"
+        @close="successMessage = ''"
+      />
+
+      <!-- Error Alert -->
+      <UAlert
+        v-if="errorMessage"
+        color="red"
+        variant="subtle"
+        :title="errorMessage"
+        icon="i-heroicons-exclamation-circle"
+        class="mb-6"
+        @close="errorMessage = ''"
+      />
+
+      <!-- Manual Input Form -->
+      <UCard class="mb-8">
+        <template #header>
+          <h2 class="text-xl font-bold">手動輸入詞語</h2>
+        </template>
         
-        <div v-if="!selectedImage">
-          <div class="text-5xl mb-3">📸</div>
-          <p class="text-lg text-gray-600 mb-2">選擇相片或拖放到此</p>
-          <p class="text-sm text-gray-600">支援 JPG、PNG 格式</p>
-          <div class="mt-4 flex justify-center gap-4">
-            <UButton color="purple" size="lg" @click="triggerFileInput">
-              📁 選擇相片
-            </UButton>
-            <UButton color="purple" variant="outline" size="lg" @click="triggerCamera">
-              📷 影相
-            </UButton>
-          </div>
-        </div>
+        <UForm :state="newWord" @submit="addWord" class="space-y-4">
+          <UFormGroup label="英文" name="english" required>
+            <UInput v-model="newWord.english" placeholder="例如：apple" size="lg" />
+          </UFormGroup>
+          
+          <UFormGroup label="中文" name="chinese">
+            <UInput v-model="newWord.chinese" placeholder="例如：蘋果" size="lg" />
+          </UFormGroup>
+          
+          <UFormGroup label="分類" name="category">
+            <USelect v-model="newWord.category" :options="categories" size="lg" />
+          </UFormGroup>
+          
+          <UButton type="submit" color="primary" size="lg" block icon="i-heroicons-plus">
+            新增詞語
+          </UButton>
+        </UForm>
+      </UCard>
+
+      <!-- Batch Input -->
+      <UCard class="mb-8">
+        <template #header>
+          <h2 class="text-xl font-bold">批量輸入</h2>
+          <p class="text-sm text-gray-600 mt-1">每行一個詞語，格式：英文,中文</p>
+        </template>
         
-        <div v-else class="space-y-4">
-          <img :src="selectedImage" class="max-h-64 mx-auto rounded-lg shadow-lg" />
-          <div class="flex justify-center gap-4">
-            <UButton color="purple" size="lg" @click="processOCR" :loading="isProcessing">
-              {{ isProcessing ? '識別中...' : '🔍 開始識別' }}
-            </UButton>
-            <UButton color="neutral" variant="outline" size="lg" @click="clearImage">
-              ✕ 清除
-            </UButton>
-          </div>
-        </div>
-      </div>
-      
-      <!-- OCR Result -->
-      <div v-if="ocrResult" class="mt-6">
-        <h3 class="text-lg font-bold text-gray-700 mb-3">識別結果（可修正）</h3>
         <UTextarea 
-          v-model="ocrResult"
-          placeholder="識別到嘅文字會顯示喺呢度，你可以修正..."
-          :rows="8"
-          class="mb-4 font-mono"
+          v-model="batchInput" 
+          placeholder="apple,蘋果
+banana,香蕉
+orange,橙"
+          :rows="6"
+          class="mb-4"
         />
-        <p class="text-sm text-gray-700 mb-4">
-          💡 格式：每行一個詞語，用逗號分隔中文、英文、拼音<br>
-          例如：蘋果,apple,píng guǒ
-        </p>
-        <div class="flex gap-4">
-          <UButton color="success" size="lg" @click="importOCRResult">
-            ✅ 匯入詞語
-          </UButton>
-          <UButton color="neutral" variant="outline" size="lg" @click="ocrResult = ''">
-            清除結果
-          </UButton>
-        </div>
-      </div>
-    </div>
+        
+        <UButton @click="addBatchWords" color="primary" variant="outline" size="lg" icon="i-heroicons-arrow-down-tray">
+          批量新增
+        </UButton>
+      </UCard>
 
-    <!-- Added Words Preview -->
-    <div v-if="addedWords.length > 0" class="sq-card bg-white p-8">
-      <h2 class="text-xl font-bold text-gray-700 mb-4">已新增詞語 ({{ addedWords.length }})</h2>
-      
-      <div class="space-y-2 max-h-64 overflow-y-auto">
+      <!-- OCR Input -->
+      <UCard class="mb-8">
+        <template #header>
+          <h2 class="text-xl font-bold">📷 OCR 相片輸入</h2>
+          <p class="text-sm text-gray-600 mt-1">影相或上傳溫習範圍，AI 自動識別文字</p>
+        </template>
+        
+        <!-- Upload Area -->
         <div 
-          v-for="(word, index) in addedWords" 
-          :key="index"
-          class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+          class="border-2 border-dashed rounded-xl p-8 text-center transition-all"
+          :class="isDragging ? 'border-primary-500 bg-primary-50' : 'border-gray-300'"
+          @dragover.prevent="isDragging = true"
+          @dragleave.prevent="isDragging = false"
+          @drop.prevent="handleDrop"
         >
-          <div>
-            <span class="text-xl font-bold text-purple-600">{{ word.english || word.chinese }}</span>
-            <span v-if="word.chinese && word.english" class="text-gray-700 ml-2">{{ word.chinese }}</span>
-            <span v-if="word.pinyin" class="text-gray-600 ml-2 text-sm">({{ word.pinyin }})</span>
+          <input 
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="handleFileSelect"
+          />
+          
+          <input 
+            ref="cameraInput"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            class="hidden"
+            @change="handleFileSelect"
+          />
+          
+          <div v-if="!selectedImage">
+            <div class="text-5xl mb-3">📸</div>
+            <p class="text-lg text-gray-600 mb-2">選擇相片或拖放到此</p>
+            <p class="text-sm text-gray-600 mb-4">支援 JPG、PNG 格式</p>
+            <div class="flex justify-center gap-4">
+              <UButton color="primary" size="lg" @click="triggerFileInput" icon="i-heroicons-folder">
+                選擇相片
+              </UButton>
+              <UButton color="primary" variant="outline" size="lg" @click="triggerCamera" icon="i-heroicons-camera">
+                影相
+              </UButton>
+            </div>
           </div>
-          <UButton @click="removeWord(index)" color="error" variant="ghost" size="sm">
-            ✕
-          </UButton>
-        </div>
-      </div>
-      
-      <!-- Action Buttons -->
-      <div class="mt-6 space-y-4">
-        <!-- Start Practice -->
-        <div class="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-4">
-          <h3 class="font-bold text-purple-700 mb-3">🎮 開始練習</h3>
-          <div class="grid grid-cols-2 gap-3">
-            <UButton @click="startGame('spelling')" color="purple" size="lg" block>
-              🔤 英文串字
-            </UButton>
-            <UButton @click="startGame('dictation')" color="purple" size="lg" block>
-              🎯 聽寫模式
-            </UButton>
-            <UButton @click="startGame('sentence')" color="purple" variant="outline" size="lg" block>
-              📝 句子重組
-            </UButton>
-            <UButton @click="startGame('matching')" color="purple" variant="outline" size="lg" block>
-              🔗 配對遊戲
-            </UButton>
+          
+          <div v-else class="space-y-4">
+            <img :src="selectedImage" class="max-h-64 mx-auto rounded-lg shadow-lg" />
+            <div class="flex justify-center gap-4">
+              <UButton color="primary" size="lg" @click="processOCR" :loading="isProcessing" icon="i-heroicons-magnifying-glass">
+                {{ isProcessing ? '識別中...' : '開始識別' }}
+              </UButton>
+              <UButton color="gray" variant="outline" size="lg" @click="clearImage" icon="i-heroicons-x-mark">
+                清除
+              </UButton>
+            </div>
           </div>
         </div>
         
-        <!-- Save/Clear -->
-        <div class="flex gap-4">
-          <UButton @click="saveWords" color="success" size="lg">
-            💾 儲存詞語
-          </UButton>
-          <UButton @click="clearAll" color="neutral" size="lg">
-            清除全部
-          </UButton>
+        <!-- OCR Progress -->
+        <UProgress v-if="isProcessing" :value="ocrProgress" class="mt-4" />
+        
+        <!-- OCR Result -->
+        <div v-if="ocrResult" class="mt-6">
+          <h3 class="text-lg font-bold mb-3">識別結果（可修正）</h3>
+          <UTextarea 
+            v-model="ocrResult"
+            placeholder="識別到嘅文字會顯示喺呢度，你可以修正..."
+            :rows="8"
+            class="mb-4 font-mono"
+          />
+          <UAlert 
+            color="blue" 
+            variant="subtle"
+            class="mb-4"
+          >
+            <template #title>
+              💡 格式：每行一個詞語，用逗號分隔英文、中文
+            </template>
+            <template #description>
+              例如：apple,蘋果
+            </template>
+          </UAlert>
+          <div class="flex gap-4">
+            <UButton color="green" size="lg" @click="importOCRResult" icon="i-heroicons-check">
+              匯入詞語
+            </UButton>
+            <UButton color="gray" variant="outline" size="lg" @click="ocrResult = ''" icon="i-heroicons-trash">
+              清除結果
+            </UButton>
+          </div>
         </div>
-      </div>
-    </div>
+      </UCard>
 
-  </div>
+      <!-- Added Words Preview -->
+      <UCard v-if="addedWords.length > 0">
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold">已新增詞語</h2>
+            <UBadge color="primary" size="lg">{{ addedWords.length }}</UBadge>
+          </div>
+        </template>
+        
+        <div class="space-y-2 max-h-64 overflow-y-auto">
+          <div 
+            v-for="(word, index) in addedWords" 
+            :key="index"
+            class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <div>
+              <span class="text-xl font-bold text-primary-600">{{ word.english }}</span>
+              <span v-if="word.chinese" class="text-gray-700 ml-2">{{ word.chinese }}</span>
+              <UBadge v-if="word.category" color="gray" size="sm" class="ml-2">{{ word.category }}</UBadge>
+            </div>
+            <UButton @click="removeWord(index)" color="red" variant="ghost" size="sm" icon="i-heroicons-x-mark" />
+          </div>
+        </div>
+        
+        <template #footer>
+          <div class="flex gap-4">
+            <UButton @click="saveWords" color="green" size="lg" :loading="isSaving" icon="i-heroicons-check">
+              儲存詞語
+            </UButton>
+            <UButton @click="clearAll" color="gray" size="lg" icon="i-heroicons-trash">
+              清除全部
+            </UButton>
+          </div>
+        </template>
+      </UCard>
+    </div>
+  </UContainer>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 
-// Toast notification helper
-const showToast = (message) => {
-  // Simple alert for now - can be replaced with proper toast library
-  // TODO: Replace with UNotification or vue-toastification
-  alert(message)
-}
+// Success/Error messages
+const successMessage = ref('')
+const errorMessage = ref('')
 
 const newWord = ref({
-  chinese: '',
   english: '',
-  pinyin: '',
-  category: 'general'
+  chinese: '',
+  category: 'custom'
 })
 
 const categories = [
-  { label: '一般', value: 'general' },
+  { label: '自訂', value: 'custom' },
   { label: '水果', value: 'fruit' },
   { label: '學校', value: 'school' },
   { label: '家庭', value: 'family' },
@@ -224,14 +237,16 @@ const categories = [
 const batchInput = ref('')
 const addedWords = ref([])
 
-// OCR 相關
+// OCR related
 const fileInput = ref(null)
 const cameraInput = ref(null)
 const selectedImage = ref(null)
 const selectedFile = ref(null)
 const isDragging = ref(false)
 const isProcessing = ref(false)
+const ocrProgress = ref(0)
 const ocrResult = ref('')
+const isSaving = ref(false)
 
 const triggerFileInput = () => {
   fileInput.value?.click()
@@ -260,7 +275,7 @@ const processFile = (file) => {
   selectedFile.value = file
   const reader = new FileReader()
   reader.onload = (e) => {
-    selectedImage.value = e.target.result
+    selectedImage.value = e.target?.result
   }
   reader.readAsDataURL(file)
 }
@@ -275,237 +290,162 @@ const processOCR = async () => {
   if (!selectedFile.value) return
   
   isProcessing.value = true
+  ocrProgress.value = 20
   
   try {
-    // 嘗試調用 OCR API
     const formData = new FormData()
     formData.append('file', selectedFile.value)
     
-    const ocrApiUrl = '/api'
+    ocrProgress.value = 50
     
-    try {
-      const response = await fetch(`${ocrApiUrl}/ocr`, {
-        method: 'POST',
-        body: formData
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        // 轉換格式：每行一個詞語
-        if (data.vocabulary && Array.isArray(data.vocabulary)) {
-          ocrResult.value = data.vocabulary.map(v => 
-            [v.chinese, v.english, v.pinyin].filter(Boolean).join(',')
-          ).join('\n')
-        } else if (data.words) {
-          ocrResult.value = data.words.join('\n')
-        } else if (data.text) {
-          ocrResult.value = data.text
-        }
-      } else {
-        throw new Error('OCR API 未能連接')
-      }
-    } catch (apiError) {
-      // API 未 ready，顯示 placeholder 提示
-      console.warn('OCR API not available:', apiError)
-      ocrResult.value = `# OCR 服務未啟動\n# 請手動輸入識別到嘅文字\n# 格式：中文,英文,拼音\n# 例如：\n蘋果,apple,píng guǒ\n香蕉,banana,xiāng jiāo`
+    const response = await $fetch('http://192.168.139.142:3002/ocr/extract-vocab', {
+      method: 'POST',
+      body: formData
+    })
+    
+    ocrProgress.value = 80
+    
+    if (response.success && response.vocabulary) {
+      // Format: english,chinese per line (removed pinyin)
+      ocrResult.value = response.vocabulary
+        .map(v => `${v.english || ''},${v.chinese || ''}`)
+        .join('\n')
+      successMessage.value = '識別成功！'
+    } else {
+      errorMessage.value = '識別失敗，請重試'
     }
+    
+    ocrProgress.value = 100
   } catch (error) {
     console.error('OCR error:', error)
-    ocrResult.value = '識別失敗，請手動輸入'
+    errorMessage.value = 'OCR 處理失敗：' + error.message
   } finally {
     isProcessing.value = false
+    ocrProgress.value = 0
   }
 }
 
-const importOCRResult = () => {
-  if (!ocrResult.value.trim()) {
-    alert('❌ 未有識別結果')
-    return
-  }
-  
-  const lines = ocrResult.value.trim().split('\n')
-  let importCount = 0
-  let skippedCount = 0
-  
-  for (const line of lines) {
-    // 跳過註釋行
-    if (line.startsWith('#')) {
-      skippedCount++
-      continue
-    }
-    if (!line.trim()) {
-      skippedCount++
-      continue
-    }
-    
-    const parts = line.split(',').map(p => p.trim())
-    
-    // 支援多種格式：
-    // 1. 中文,英文,拼音 (原有格式)
-    // 2. 英文 (只有英文單詞)
-    // 3. 英文,中文 (英文在前)
-    
-    if (parts.length === 1) {
-      // 只有一個詞
-      const word = parts[0]
-      if (!word) {
-        skippedCount++
-        continue
-      }
-      const isEnglish = /^[a-zA-Z\s]+$/.test(word)
-      addedWords.value.push({
-        chinese: isEnglish ? '' : word,
-        english: isEnglish ? word : '',
-        pinyin: '',
-        category: 'custom'
-      })
-      importCount++
-    } else if (parts.length >= 2) {
-      // 判斷第一個係中文定英文
-      const first = parts[0]
-      const second = parts[1]
-      if (!first && !second) {
-        skippedCount++
-        continue
-      }
-      const isFirstEnglish = /^[a-zA-Z\s]+$/.test(first)
-      
-      addedWords.value.push({
-        chinese: isFirstEnglish ? second : first,
-        english: isFirstEnglish ? first : second,
-        pinyin: parts[2] || '',
-        category: 'custom'
-      })
-      importCount++
-    }
-  }
-  
-  if (importCount > 0) {
-    showToast(`✅ 已匯入 ${importCount} 個詞語${skippedCount > 0 ? `，跳過 ${skippedCount} 行` : ''}！`)
-    ocrResult.value = ''
-    selectedImage.value = null
-    selectedFile.value = null
-  } else {
-    alert('❌ 無法匯入任何詞語，請檢查格式')
-  }
-}
-
-const addWord = () => {
-  // Validation: at least one of chinese or english must be filled
-  if (!newWord.value.chinese.trim() && !newWord.value.english.trim()) {
-    alert('請輸入中文或英文！')
+const addWord = async () => {
+  if (!newWord.value.english) {
+    errorMessage.value = '請輸入英文'
     return
   }
   
   addedWords.value.push({ ...newWord.value })
   
-  // Success feedback
-  const wordDisplay = newWord.value.english || newWord.value.chinese
-  showToast(`✅ 已新增詞語：${wordDisplay}`)
-  
   // Reset form
   newWord.value = {
-    chinese: '',
     english: '',
-    pinyin: '',
-    category: 'general'
+    chinese: '',
+    category: 'custom'
   }
+  
+  successMessage.value = '詞語已加入列表'
 }
 
 const addBatchWords = () => {
-  if (!batchInput.value.trim()) {
-    alert('請輸入詞語！')
-    return
-  }
+  if (!batchInput.value) return
   
-  const lines = batchInput.value.trim().split('\n')
-  let importCount = 0
-  let skippedCount = 0
+  const lines = batchInput.value.split('\n').filter(line => line.trim())
   
-  for (const line of lines) {
-    if (!line.trim()) continue
-    
+  lines.forEach(line => {
     const parts = line.split(',').map(p => p.trim())
-    
-    if (parts.length === 1) {
-      // 只有一個詞 - 判斷係中文定英文
-      const word = parts[0]
-      if (!word) {
-        skippedCount++
-        continue
-      }
-      const isEnglish = /^[a-zA-Z\s]+$/.test(word)
+    if (parts[0]) { // At least has english
       addedWords.value.push({
-        chinese: isEnglish ? '' : word,
-        english: isEnglish ? word : '',
-        pinyin: '',
+        english: parts[0] || '',
+        chinese: parts[1] || '',
         category: 'custom'
       })
-      importCount++
-    } else if (parts[0]) {
-      // 多個 parts - 判斷格式
-      const first = parts[0]
-      const second = parts[1] || ''
-      const isFirstEnglish = /^[a-zA-Z\s]+$/.test(first)
-      
-      addedWords.value.push({
-        chinese: isFirstEnglish ? second : first,
-        english: isFirstEnglish ? first : second,
-        pinyin: parts[2] || '',
-        category: 'custom'
-      })
-      importCount++
     }
-  }
+  })
   
-  if (importCount > 0) {
-    showToast(`✅ 已批量新增 ${importCount} 個詞語${skippedCount > 0 ? `，跳過 ${skippedCount} 行` : ''}！`)
-    batchInput.value = ''
-  } else {
-    alert('❌ 無法識別任何詞語，請檢查格式')
-  }
+  batchInput.value = ''
+  successMessage.value = `已加入 ${lines.length} 個詞語`
+}
+
+const importOCRResult = () => {
+  if (!ocrResult.value) return
+  
+  const lines = ocrResult.value.split('\n').filter(line => line.trim())
+  
+  lines.forEach(line => {
+    const parts = line.split(',').map(p => p.trim())
+    if (parts[0]) { // At least has english
+      addedWords.value.push({
+        english: parts[0] || '',
+        chinese: parts[1] || '',
+        category: 'ocr'
+      })
+    }
+  })
+  
+  ocrResult.value = ''
+  clearImage()
+  successMessage.value = `已匯入 ${lines.length} 個詞語`
 }
 
 const removeWord = (index) => {
-  const word = addedWords.value[index]
-  const wordDisplay = word.english || word.chinese
   addedWords.value.splice(index, 1)
-  showToast(`🗑️ 已刪除：${wordDisplay}`)
 }
 
 const clearAll = () => {
-  if (addedWords.value.length === 0) return
-  
-  if (confirm(`確定要清除全部 ${addedWords.value.length} 個詞語？`)) {
+  if (confirm('確定清除所有詞語？')) {
     addedWords.value = []
-    showToast('🗑️ 已清除全部詞語')
+    successMessage.value = '已清除所有詞語'
   }
 }
 
 const saveWords = async () => {
-  if (addedWords.value.length === 0) {
-    alert('❌ 未有詞語可儲存')
-    return
+  if (addedWords.value.length === 0) return
+  
+  isSaving.value = true
+  
+  try {
+    const saved = []
+    const skipped = []
+    
+    for (const word of addedWords.value) {
+      try {
+        // Check if word exists
+        const existing = await $fetch(`http://192.168.139.142:3001/words?english=eq.${word.english}`)
+        
+        if (existing && existing.length > 0) {
+          skipped.push(word.english)
+          continue
+        }
+        
+        // Save word
+        await $fetch('http://192.168.139.142:3001/words', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+          body: JSON.stringify({
+            english: word.english,
+            chinese: word.chinese || '',
+            pinyin: '', // Empty as per requirement
+            category: word.category || 'custom'
+          })
+        })
+        
+        saved.push(word.english)
+      } catch (error) {
+        console.error(`Failed to save ${word.english}:`, error)
+      }
+    }
+    
+    // Clear added words
+    addedWords.value = []
+    
+    // Show result
+    if (saved.length > 0) {
+      successMessage.value = `成功儲存 ${saved.length} 個詞語${skipped.length > 0 ? `（跳過 ${skipped.length} 個重複詞語）` : ''}`
+    } else {
+      errorMessage.value = '所有詞語已存在'
+    }
+  } catch (error) {
+    console.error('Save error:', error)
+    errorMessage.value = '儲存失敗：' + error.message
+  } finally {
+    isSaving.value = false
   }
-  
-  // Save to localStorage for persistence
-  localStorage.setItem('spellquest_custom_words', JSON.stringify(addedWords.value))
-  showToast(`💾 已儲存 ${addedWords.value.length} 個詞語！`)
-}
-
-const startGame = (gameType) => {
-  if (addedWords.value.length === 0) {
-    alert('❌ 請先新增詞語！')
-    return
-  }
-  
-  // Save words to localStorage for the game to use
-  localStorage.setItem('spellquest_practice_words', JSON.stringify(addedWords.value))
-  localStorage.setItem('spellquest_practice_mode', 'custom')
-  
-  showToast(`🎮 開始遊戲：${gameType}`)
-  
-  // Navigate to game
-  navigateTo(`/${gameType}`)
 }
 </script>
