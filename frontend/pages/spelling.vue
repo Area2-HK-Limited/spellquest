@@ -1,49 +1,50 @@
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-2xl">
+  <div class="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-2xl">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
-      <NuxtLink to="/" class="text-2xl">← 返回</NuxtLink>
-      <div class="text-center">
-        <h1 class="text-3xl font-bold text-indigo-600">🔤 英文串字</h1>
-        <p class="text-gray-600">睇中文，串英文！</p>
+    <div class="flex items-center justify-between mb-4 sm:mb-8">
+      <NuxtLink to="/" class="text-lg sm:text-2xl">← 返回</NuxtLink>
+      <div class="text-center flex-1 mx-2">
+        <h1 class="text-xl sm:text-3xl font-bold text-indigo-600">🔤 英文串字</h1>
+        <p class="text-xs sm:text-base text-gray-600 hidden sm:block">睇中文，串英文！</p>
       </div>
-      <div class="text-right">
-        <div class="text-2xl">⭐ {{ score }}</div>
-        <div class="text-sm text-gray-500">第 {{ currentIndex + 1 }}/{{ words.length }} 題</div>
+      <div class="text-right min-w-[80px] sm:min-w-[100px]">
+        <div class="text-lg sm:text-2xl">⭐ {{ score }}</div>
+        <div class="text-xs sm:text-sm text-gray-500">{{ currentIndex + 1 }}/{{ words.length }}</div>
       </div>
     </div>
 
     <!-- Game Area -->
-    <div v-if="currentWord" class="sq-card bg-white p-8 text-center mb-8">
+    <div v-if="currentWord" class="sq-card bg-white p-4 sm:p-8 text-center mb-4 sm:mb-8">
       <!-- Word Display -->
-      <div v-if="currentWord.chinese" class="text-5xl mb-2">{{ currentWord.chinese }}</div>
-      <div v-else class="text-3xl mb-2 text-purple-600">🔊 聽發音，串英文字</div>
-      <div v-if="currentWord.pinyin" class="text-xl text-gray-500 mb-6">{{ currentWord.pinyin }}</div>
-      <div v-else-if="!currentWord.chinese" class="text-lg text-gray-400 mb-6">第 {{ currentIndex + 1 }} 個字</div>
+      <div v-if="currentWord.chinese" class="text-3xl sm:text-5xl mb-2">{{ currentWord.chinese }}</div>
+      <div v-else class="text-xl sm:text-3xl mb-2 text-purple-600">🔊 聽發音，串英文字</div>
+      <div v-if="currentWord.pinyin" class="text-base sm:text-xl text-gray-500 mb-4 sm:mb-6">{{ currentWord.pinyin }}</div>
+      <div v-else-if="!currentWord.chinese" class="text-sm sm:text-lg text-gray-400 mb-4 sm:mb-6">第 {{ currentIndex + 1 }} 個字</div>
       
       <!-- Speak Button -->
       <UButton 
         @click="speakWord" 
         color="primary" 
         variant="outline"
-        size="lg"
-        class="mb-6"
+        :size="isMobile ? 'md' : 'lg'"
+        class="mb-4 sm:mb-6"
       >
         🔊 聽發音
       </UButton>
 
       <!-- Scrambled Letters -->
-      <div class="mb-6">
-        <p class="text-gray-500 mb-3">點擊字母拼出英文：</p>
-        <div class="flex flex-wrap justify-center gap-2">
+      <div class="mb-4 sm:mb-6">
+        <p class="text-sm sm:text-base text-gray-500 mb-2 sm:mb-3">點擊字母拼出英文：</p>
+        <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2">
           <UButton
             v-for="(letter, index) in scrambledLetters"
             :key="index"
             @click="selectLetter(index)"
             :disabled="selectedIndexes.includes(index)"
-            size="xl"
+            :size="isMobile ? 'lg' : 'xl'"
             :color="selectedIndexes.includes(index) ? 'neutral' : 'primary'"
-            class="text-2xl w-14 h-14 font-bold"
+            class="text-xl sm:text-2xl font-bold"
+            :class="isMobile ? 'w-12 h-12' : 'w-14 h-14'"
           >
             {{ letter }}
           </UButton>
@@ -51,10 +52,10 @@
       </div>
 
       <!-- Answer Area -->
-      <div class="mb-6">
-        <p class="text-gray-500 mb-3">你的答案：</p>
+      <div class="mb-4 sm:mb-6">
+        <p class="text-sm sm:text-base text-gray-500 mb-2 sm:mb-3">你的答案：</p>
         <div 
-          class="min-h-16 border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-wrap justify-center gap-2"
+          class="min-h-14 sm:min-h-16 border-2 border-dashed border-gray-300 rounded-xl p-3 sm:p-4 flex flex-wrap justify-center gap-1.5 sm:gap-2"
           :class="{
             'border-green-500 bg-green-50': feedback === 'correct',
             'border-red-500 bg-red-50': feedback === 'wrong'
@@ -64,56 +65,57 @@
             v-for="(letter, index) in answer"
             :key="index"
             @click="removeLetter(index)"
-            size="xl"
+            :size="isMobile ? 'lg' : 'xl'"
             color="secondary"
-            class="text-2xl w-14 h-14 font-bold"
+            class="text-xl sm:text-2xl font-bold"
+            :class="isMobile ? 'w-12 h-12' : 'w-14 h-14'"
           >
             {{ letter }}
           </UButton>
-          <span v-if="answer.length === 0" class="text-gray-400 text-xl self-center">
+          <span v-if="answer.length === 0" class="text-gray-400 text-base sm:text-xl self-center">
             點擊上面字母...
           </span>
         </div>
       </div>
 
       <!-- Feedback -->
-      <div v-if="feedback" class="mb-6">
-        <div class="text-2xl font-bold" :class="feedback === 'correct' ? 'text-green-600' : 'text-red-600'">
+      <div v-if="feedback" class="mb-4 sm:mb-6">
+        <div class="text-xl sm:text-2xl font-bold" :class="feedback === 'correct' ? 'text-green-600' : 'text-red-600'">
           {{ feedback === 'correct' ? '✅ 正確！太棒了！' : '❌ 再試一次！' }}
         </div>
         
         <!-- Memory Tip (shown after correct answer) -->
-        <div v-if="feedback === 'correct' && memoryTip" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-left">
+        <div v-if="feedback === 'correct' && memoryTip" class="mt-3 sm:mt-4 p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-left">
           <div class="flex items-start gap-2">
-            <span class="text-2xl">💡</span>
-            <div>
-              <p class="font-bold text-yellow-700 mb-1">記憶小貼士：</p>
-              <p class="text-yellow-800">{{ memoryTip }}</p>
+            <span class="text-xl sm:text-2xl">💡</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-yellow-700 mb-1 text-sm sm:text-base">記憶小貼士：</p>
+              <p class="text-yellow-800 text-xs sm:text-base break-words">{{ memoryTip }}</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Actions -->
-      <div class="flex justify-center gap-4">
-        <UButton @click="clearAnswer" color="neutral" size="lg">
+      <div class="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4">
+        <UButton @click="clearAnswer" color="neutral" :size="isMobile ? 'md' : 'lg'" class="w-full sm:w-auto">
           清除
         </UButton>
-        <UButton @click="checkAnswer" color="primary" size="lg" :disabled="answer.length === 0">
+        <UButton @click="checkAnswer" color="primary" :size="isMobile ? 'md' : 'lg'" :disabled="answer.length === 0" class="w-full sm:w-auto">
           確認答案
         </UButton>
-        <UButton v-if="feedback === 'correct'" @click="nextWord" color="success" size="lg">
+        <UButton v-if="feedback === 'correct'" @click="nextWord" color="success" :size="isMobile ? 'md' : 'lg'" class="w-full sm:w-auto">
           下一題 →
         </UButton>
       </div>
     </div>
 
     <!-- Completed -->
-    <div v-else class="sq-card bg-white p-8 text-center">
-      <div class="text-6xl mb-4">🎉</div>
-      <h2 class="text-3xl font-bold text-indigo-600 mb-4">完成！</h2>
-      <p class="text-xl text-gray-600 mb-6">你答對了 {{ score }} 題！</p>
-      <UButton @click="restart" color="primary" size="xl">
+    <div v-else class="sq-card bg-white p-6 sm:p-8 text-center">
+      <div class="text-5xl sm:text-6xl mb-4">🎉</div>
+      <h2 class="text-2xl sm:text-3xl font-bold text-indigo-600 mb-4">完成！</h2>
+      <p class="text-lg sm:text-xl text-gray-600 mb-6">你答對了 {{ score }} 題！</p>
+      <UButton @click="restart" color="primary" :size="isMobile ? 'lg' : 'xl'" class="w-full sm:w-auto">
         再玩一次
       </UButton>
     </div>
@@ -121,7 +123,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 // Default sample words
 const defaultWords = [
@@ -141,6 +143,46 @@ const answer = ref([])
 const selectedIndexes = ref([])
 const feedback = ref(null)
 const memoryTip = ref('')
+
+// Mobile detection
+const isMobile = ref(false)
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 640 // Tailwind sm breakpoint
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  
+  // Check if there are custom practice words
+  const customWords = localStorage.getItem('spellquest_practice_words')
+  const mode = localStorage.getItem('spellquest_practice_mode')
+  
+  if (mode === 'custom' && customWords) {
+    try {
+      const parsed = JSON.parse(customWords)
+      // Filter words that have english (for spelling game)
+      const validWords = parsed.filter(w => w.english && w.english.trim())
+      if (validWords.length > 0) {
+        words.value = validWords
+        practiceMode.value = 'custom'
+        // Clear the practice mode flag (one-time use)
+        localStorage.removeItem('spellquest_practice_mode')
+        return
+      }
+    } catch (e) {
+      console.error('Failed to parse custom words:', e)
+    }
+  }
+  
+  // Fall back to default words
+  words.value = defaultWords
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 
 // Memory tips for common words (can be expanded or replaced with AI)
 const memoryTips = {
@@ -204,33 +246,6 @@ const generateMemoryTip = (word) => {
   
   return ''
 }
-
-// Load words on mount
-onMounted(() => {
-  // Check if there are custom practice words
-  const customWords = localStorage.getItem('spellquest_practice_words')
-  const mode = localStorage.getItem('spellquest_practice_mode')
-  
-  if (mode === 'custom' && customWords) {
-    try {
-      const parsed = JSON.parse(customWords)
-      // Filter words that have english (for spelling game)
-      const validWords = parsed.filter(w => w.english && w.english.trim())
-      if (validWords.length > 0) {
-        words.value = validWords
-        practiceMode.value = 'custom'
-        // Clear the practice mode flag (one-time use)
-        localStorage.removeItem('spellquest_practice_mode')
-        return
-      }
-    } catch (e) {
-      console.error('Failed to parse custom words:', e)
-    }
-  }
-  
-  // Fall back to default words
-  words.value = defaultWords
-})
 
 const currentWord = computed(() => {
   return currentIndex.value < words.value.length ? words.value[currentIndex.value] : null
