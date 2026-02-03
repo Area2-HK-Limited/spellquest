@@ -1,59 +1,60 @@
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-6xl">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
-      <NuxtLink to="/" class="text-2xl">← 返回</NuxtLink>
-      <div class="text-center">
-        <h1 class="text-3xl font-bold text-cyan-600">📚 詞語列表</h1>
-        <p class="text-gray-600">所有詞語一覽</p>
-      </div>
-      <NuxtLink to="/input">
-        <UButton color="primary">➕ 新增</UButton>
-      </NuxtLink>
-    </div>
-
-    <!-- Filter -->
-    <div class="sq-card bg-white p-4 mb-6">
-      <div class="flex flex-wrap gap-4 items-center">
-        <UInput 
-          v-model="searchQuery" 
-          placeholder="搜尋詞語..." 
-          icon="i-heroicons-magnifying-glass"
-          class="flex-1"
-        />
-        <USelect v-model="filterCategory" :options="categoryOptions" placeholder="分類" />
-      </div>
-    </div>
-
-    <!-- Loading State -->
-    <div v-if="pending" class="sq-card bg-white p-8 text-center">
-      <div class="flex justify-center items-center gap-2">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
-        <span class="text-gray-600">載入中...</span>
-      </div>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="error" class="sq-card bg-white p-8">
-      <UAlert 
-        color="red" 
-        title="載入失敗" 
-        :description="error.message"
-      />
-    </div>
-
-    <!-- Word List -->
-    <div v-else class="sq-card bg-white overflow-hidden">
-      <UTable 
-        :rows="filteredWords" 
-        :columns="columns"
-        :loading="pending"
+  <UContainer>
+    <div class="py-8">
+      <!-- Header -->
+      <UPageHeader
+        title="📚 詞語列表"
+        description="所有詞語一覽"
       >
-        <template #chinese-data="{ row }">
-          <span class="text-xl font-bold text-cyan-600">{{ row.chinese || '-' }}</span>
+        <template #links>
+          <UButton to="/" variant="ghost" icon="i-heroicons-arrow-left">返回</UButton>
+          <UButton to="/input" color="primary" icon="i-heroicons-plus">新增</UButton>
         </template>
-        
-        <template #english-data="{ row }">
+      </UPageHeader>
+
+      <!-- Filter -->
+      <UCard class="mb-6">
+        <div class="flex flex-wrap gap-4 items-center">
+          <UInput 
+            v-model="searchQuery" 
+            placeholder="搜尋詞語..." 
+            icon="i-heroicons-magnifying-glass"
+            class="flex-1"
+          />
+          <USelect v-model="filterCategory" :options="categoryOptions" placeholder="分類" />
+        </div>
+      </UCard>
+
+      <!-- Loading State -->
+      <UCard v-if="pending">
+        <div class="space-y-4">
+          <USkeleton class="h-12 w-full" />
+          <USkeleton class="h-12 w-full" />
+          <USkeleton class="h-12 w-full" />
+        </div>
+      </UCard>
+
+      <!-- Error State -->
+      <UCard v-else-if="error">
+        <UAlert 
+          color="red" 
+          title="載入失敗" 
+          :description="error.message"
+        />
+      </UCard>
+
+      <!-- Word List -->
+      <UCard v-else>
+        <UTable 
+          :rows="filteredWords" 
+          :columns="columns"
+          :loading="pending"
+        >
+          <template #chinese-data="{ row }">
+            <span class="text-xl font-bold text-cyan-600">{{ row.chinese || '-' }}</span>
+          </template>
+          
+          <template #english-data="{ row }">
           <span class="text-gray-700">{{ row.english }}</span>
         </template>
         
@@ -88,15 +89,24 @@
         </template>
       </UTable>
       
-      <div v-if="filteredWords.length === 0" class="p-8 text-center text-gray-500">
-        冇搵到詞語
-      </div>
-    </div>
+      <template #footer v-if="filteredWords.length === 0">
+        <div class="text-center text-gray-500">
+          冇搵到詞語
+        </div>
+      </template>
+      </UCard>
 
-    <!-- Stats -->
-    <div class="mt-6 text-center text-gray-500">
-      共 {{ filteredWords.length }} 個詞語
-    </div>
+      <!-- Stats -->
+      <UAlert 
+        v-if="filteredWords.length > 0"
+        color="primary" 
+        variant="subtle"
+        class="mt-6"
+      >
+        <template #title>
+          <div class="text-center">共 {{ filteredWords.length }} 個詞語</div>
+        </template>
+      </UAlert>
 
     <!-- Edit Modal -->
     <UModal v-model="isEditModalOpen" title="編輯詞語">
@@ -150,7 +160,8 @@
         </template>
       </UCard>
     </UModal>
-  </div>
+    </div>
+  </UContainer>
 </template>
 
 <script setup>
