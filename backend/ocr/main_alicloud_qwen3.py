@@ -13,8 +13,8 @@ import json
 
 app = FastAPI(
     title="SpellQuest OCR Service (AliCloud Qwen3-VL)",
-    description="中英文 OCR 識別服務（使用 AliCloud Qwen3-VL）",
-    version="2.2.0"
+    description="中英文 OCR 識別服務（使用 AliCloud Qwen3-VL）+ Auto-save to DB",
+    version="3.0.0"
 )
 
 # CORS
@@ -88,15 +88,21 @@ async def ocr_upload(file: UploadFile = File(...)):
 @app.post("/ocr/extract-vocab")
 async def ocr_extract_vocab(file: UploadFile = File(...)):
     """
-    上傳圖片並智能提取詞語
-    適合默書範圍圖片 (詞語 + 英文翻譯 + 拼音)
+    上傳圖片並智能提取詞語，自動儲存到 DB
+    適合默書範圍圖片 (詞語 + 英文翻譯)
     
     Returns:
     {
+        "success": true,
         "vocabulary": [
-            {"chinese": "蘋果", "english": "apple", "pinyin": "píng guǒ"},
+            {"chinese": "蘋果", "english": "apple"},
             ...
-        ]
+        ],
+        "saved": {
+            "created": [...],
+            "skipped": [...],
+            "errors": []
+        }
     }
     """
     if not file.content_type.startswith("image/"):
@@ -107,42 +113,135 @@ async def ocr_extract_vocab(file: UploadFile = File(...)):
         contents = await file.read()
         image_b64 = base64.b64encode(contents).decode('utf-8')
         
-        # Call Qwen3-VL API with structured prompt
+        # Call Qwen3-VL API with updated prompt (NO PINYIN)
         prompt = """
-請識別圖片中的詞語列表，並提取每個詞語的：
-1. 中文
-2. 英文翻譯
-3. 拼音（如果有）
+請識別圖片中的英文單字。
+如果圖片中有中文翻譯，也一併提取。
+不需要拼音。
 
 常見格式：
-- "蘋果 apple píng guǒ"
-- "1. 蘋果 (apple) píng guǒ"
-- "蘋果 apple"
+- "apple 蘋果"
+- "1. apple (蘋果)"
+- "apple"
 
 返回 JSON 格式：
 {
   "vocabulary": [
     {
-      "chinese": "蘋果",
       "english": "apple",
-      "pinyin": "píng guǒ"
+      "chinese": "蘋果"
     },
-    ...
+    {
+      "english": "banana",
+      "chinese": "香蕉"
+    }
   ]
 }
 
 注意：
-- 如果沒有拼音，pinyin 返回空字串
 - 忽略序號（1. 2. 等）
-- 每個詞語必須有中文或英文
+- 每個詞語必須有英文
+- 如果沒有中文，chinese 返回空字串
+- 不要拼音
 """
         
         result = await call_qwen3_vl(image_b64, prompt)
+        vocabulary = result.get("vocabulary", [])
         
-        return result
+        # Auto-save to DB via PostgREST
+        saved_results = await save_vocabulary_to_db(vocabulary)
+        
+        return {
+            "success": True,
+            "vocabulary": vocabulary,
+            "saved": saved_results
+        }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"詞語提取失敗: {str(e)}")
+
+
+async def save_vocabulary_to_db(vocabulary: List[Dict]) -> Dict[str, List]:
+    """
+    Save vocabulary to PostgreSQL via PostgREST
+    Skip duplicates based on english field
+    
+    Args:
+        vocabulary: List of {english: str, chinese: str}
+        
+    Returns:
+        {
+            "created": [saved_words],
+            "skipped": [{english, reason}],
+            "errors": [{english, error}]
+        }
+    """
+    POSTGREST_URL = "http://192.168.139.142:3001/words"
+    
+    results = {
+        "created": [],
+        "skipped": [],
+        "errors": []
+    }
+    
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        for word in vocabulary:
+            try:
+                english = word.get("english", "").strip()
+                chinese = word.get("chinese", "").strip()
+                
+                if not english:
+                    continue
+                
+                # Check if word exists
+                check_response = await client.get(
+                    f"{POSTGREST_URL}?english=eq.{english}"
+                )
+                
+                if check_response.status_code == 200:
+                    existing = check_response.json()
+                    
+                    if existing and len(existing) > 0:
+                        # Word exists, skip
+                        results["skipped"].append({
+                            "english": english,
+                            "reason": "already exists",
+                            "id": existing[0].get("id")
+                        })
+                        continue
+                
+                # Insert new word
+                insert_response = await client.post(
+                    POSTGREST_URL,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Prefer": "return=representation"
+                    },
+                    json={
+                        "english": english,
+                        "chinese": chinese,
+                        "pinyin": "",  # Empty string (not null)
+                        "category": "custom",
+                        "grade": None
+                    }
+                )
+                
+                if insert_response.status_code == 201:
+                    created_word = insert_response.json()[0]
+                    results["created"].append(created_word)
+                else:
+                    results["errors"].append({
+                        "english": english,
+                        "error": f"HTTP {insert_response.status_code}: {insert_response.text}"
+                    })
+                    
+            except Exception as e:
+                results["errors"].append({
+                    "english": word.get("english", "unknown"),
+                    "error": str(e)
+                })
+    
+    return results
 
 
 async def call_qwen3_vl(image_b64: str, prompt: str) -> Dict[str, Any]:
