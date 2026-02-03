@@ -70,22 +70,31 @@ npm run dev
 ## 📸 截圖
 
 ### 🏠 主頁
-![Home](screenshots/home.png)
+![Home](screenshots/01-homepage.png)
 
 ### 🔤 英文串字
-![Spelling](screenshots/spelling.png)
+![Spelling](screenshots/06-spelling.png)
 
 ### 📝 句子重組
-![Sentence](screenshots/sentence.png)
+![Sentence](screenshots/07-sentence.png)
 
-### ✏️ 中文認字
-![Flashcard](screenshots/flashcard.png)
-
-### 🎯 聽寫模式
-![Dictation](screenshots/dictation.png)
+### ✏️ 中文認字 (Flashcard)
+![Flashcard](screenshots/08-flashcard.png)
 
 ### 🔗 配對遊戲
-![Matching](screenshots/matching.png)
+![Matching](screenshots/09-matching.png)
+
+### 🎯 聽寫模式
+![Dictation](screenshots/10-dictation.png)
+
+### 📷 輸入詞語
+![Input](screenshots/11-input.png)
+
+### 📚 詞語列表
+![Words](screenshots/12-words.png)
+
+### 📊 學習統計
+![Stats](screenshots/04-stats.png)
 
 ## 🛠️ 技術架構
 
