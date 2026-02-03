@@ -42,7 +42,7 @@
     <!-- Batch Input -->
     <div class="sq-card bg-white p-8 mb-8">
       <h2 class="text-xl font-bold text-gray-700 mb-4">批量輸入</h2>
-      <p class="text-gray-500 mb-4">每行一個詞語，格式：中文,英文,拼音</p>
+      <p class="text-gray-700 mb-4">每行一個詞語，格式：中文,英文,拼音</p>
       
       <UTextarea 
         v-model="batchInput" 
@@ -61,7 +61,7 @@
     <!-- OCR Input -->
     <div class="sq-card bg-white p-8 mb-8">
       <h2 class="text-xl font-bold text-gray-700 mb-4">📷 OCR 相片輸入</h2>
-      <p class="text-gray-500 mb-4">影相或上傳溫習範圍，AI 自動識別文字</p>
+      <p class="text-gray-700 mb-4">影相或上傳溫習範圍，AI 自動識別文字</p>
       
       <!-- Upload Area -->
       <div 
@@ -90,7 +90,7 @@
         <div v-if="!selectedImage">
           <div class="text-5xl mb-3">📸</div>
           <p class="text-lg text-gray-600 mb-2">選擇相片或拖放到此</p>
-          <p class="text-sm text-gray-400">支援 JPG、PNG 格式</p>
+          <p class="text-sm text-gray-600">支援 JPG、PNG 格式</p>
           <div class="mt-4 flex justify-center gap-4">
             <UButton color="purple" size="lg" @click="triggerFileInput">
               📁 選擇相片
@@ -123,7 +123,7 @@
           :rows="8"
           class="mb-4 font-mono"
         />
-        <p class="text-sm text-gray-500 mb-4">
+        <p class="text-sm text-gray-700 mb-4">
           💡 格式：每行一個詞語，用逗號分隔中文、英文、拼音<br>
           例如：蘋果,apple,píng guǒ
         </p>
@@ -150,8 +150,8 @@
         >
           <div>
             <span class="text-xl font-bold text-purple-600">{{ word.english || word.chinese }}</span>
-            <span v-if="word.chinese && word.english" class="text-gray-500 ml-2">{{ word.chinese }}</span>
-            <span v-if="word.pinyin" class="text-gray-400 ml-2 text-sm">({{ word.pinyin }})</span>
+            <span v-if="word.chinese && word.english" class="text-gray-700 ml-2">{{ word.chinese }}</span>
+            <span v-if="word.pinyin" class="text-gray-600 ml-2 text-sm">({{ word.pinyin }})</span>
           </div>
           <UButton @click="removeWord(index)" color="error" variant="ghost" size="sm">
             ✕
