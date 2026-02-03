@@ -65,9 +65,8 @@
       
       <!-- Upload Area -->
       <div 
-        class="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all"
-        :class="isDragging ? 'border-purple-500 bg-purple-50' : 'border-gray-300 hover:border-purple-400'"
-        @click="triggerFileInput"
+        class="border-2 border-dashed rounded-xl p-8 text-center transition-all"
+        :class="isDragging ? 'border-purple-500 bg-purple-50' : 'border-gray-300'"
         @dragover.prevent="isDragging = true"
         @dragleave.prevent="isDragging = false"
         @drop.prevent="handleDrop"
@@ -90,13 +89,13 @@
         
         <div v-if="!selectedImage">
           <div class="text-5xl mb-3">📸</div>
-          <p class="text-lg text-gray-600 mb-2">點擊上傳相片或拖放</p>
+          <p class="text-lg text-gray-600 mb-2">選擇相片或拖放到此</p>
           <p class="text-sm text-gray-400">支援 JPG、PNG 格式</p>
           <div class="mt-4 flex justify-center gap-4">
-            <UButton color="purple" size="lg" @click.stop="triggerFileInput">
+            <UButton color="purple" size="lg" @click="triggerFileInput">
               📁 選擇相片
             </UButton>
-            <UButton color="purple" variant="outline" size="lg" @click.stop="triggerCamera">
+            <UButton color="purple" variant="outline" size="lg" @click="triggerCamera">
               📷 影相
             </UButton>
           </div>
@@ -105,10 +104,10 @@
         <div v-else class="space-y-4">
           <img :src="selectedImage" class="max-h-64 mx-auto rounded-lg shadow-lg" />
           <div class="flex justify-center gap-4">
-            <UButton color="purple" size="lg" @click.stop="processOCR" :loading="isProcessing">
+            <UButton color="purple" size="lg" @click="processOCR" :loading="isProcessing">
               {{ isProcessing ? '識別中...' : '🔍 開始識別' }}
             </UButton>
-            <UButton color="neutral" variant="outline" size="lg" @click.stop="clearImage">
+            <UButton color="neutral" variant="outline" size="lg" @click="clearImage">
               ✕ 清除
             </UButton>
           </div>
