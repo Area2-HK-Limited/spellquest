@@ -49,7 +49,7 @@ services:
     depends_on:
       - postgrest
 
-  # OCR Service (Claude Vision via GitHub Copilot API)
+  # OCR Service (Qwen-VL Vision via Alibaba DashScope)
   ocr:
     build:
       context: ./backend/ocr
@@ -58,7 +58,8 @@ services:
     restart: always
     environment:
       TZ: Asia/Hong_Kong
-      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY}
+      QWEN_API_KEY: ${QWEN_API_KEY}
     ports:
       - "3002:3002"
 
