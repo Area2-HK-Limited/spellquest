@@ -76,6 +76,13 @@
           ref="fileInput"
           type="file"
           accept="image/*"
+          class="hidden"
+          @change="handleFileSelect"
+        />
+        <input 
+          ref="cameraInput"
+          type="file"
+          accept="image/*"
           capture="environment"
           class="hidden"
           @change="handleFileSelect"
@@ -220,6 +227,7 @@ const addedWords = ref([])
 
 // OCR 相關
 const fileInput = ref(null)
+const cameraInput = ref(null)
 const selectedImage = ref(null)
 const selectedFile = ref(null)
 const isDragging = ref(false)
@@ -231,13 +239,7 @@ const triggerFileInput = () => {
 }
 
 const triggerCamera = () => {
-  // Create a separate input for camera capture
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = 'image/*'
-  input.capture = 'environment'
-  input.onchange = (e) => handleFileSelect(e)
-  input.click()
+  cameraInput.value?.click()
 }
 
 const handleFileSelect = (event) => {
