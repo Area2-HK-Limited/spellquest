@@ -1,125 +1,203 @@
 <template>
-  <div class="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-2xl">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-4 sm:mb-8">
-      <NuxtLink to="/" class="text-lg sm:text-2xl">← 返回</NuxtLink>
-      <div class="text-center flex-1 mx-2">
-        <h1 class="text-xl sm:text-3xl font-bold text-indigo-600">🔤 英文串字</h1>
-        <p class="text-xs sm:text-base text-gray-600 hidden sm:block">睇中文，串英文！</p>
-      </div>
-      <div class="text-right min-w-[80px] sm:min-w-[100px]">
-        <div class="text-lg sm:text-2xl">⭐ {{ score }}</div>
-        <div class="text-xs sm:text-sm text-gray-500">{{ currentIndex + 1 }}/{{ words.length }}</div>
-      </div>
-    </div>
-
-    <!-- Game Area -->
-    <div v-if="currentWord" class="sq-card bg-white p-4 sm:p-8 text-center mb-4 sm:mb-8">
-      <!-- Word Display -->
-      <div v-if="currentWord.chinese" class="text-3xl sm:text-5xl mb-2">{{ currentWord.chinese }}</div>
-      <div v-else class="text-xl sm:text-3xl mb-2 text-purple-600">🔊 聽發音，串英文字</div>
-      <div v-if="currentWord.pinyin" class="text-base sm:text-xl text-gray-500 mb-4 sm:mb-6">{{ currentWord.pinyin }}</div>
-      <div v-else-if="!currentWord.chinese" class="text-sm sm:text-lg text-gray-400 mb-4 sm:mb-6">第 {{ currentIndex + 1 }} 個字</div>
-      
-      <!-- Speak Button -->
-      <UButton 
-        @click="speakWord" 
-        color="primary" 
-        variant="outline"
-        :size="isMobile ? 'md' : 'lg'"
-        class="mb-4 sm:mb-6"
+  <UContainer>
+    <div class="py-4 sm:py-8">
+      <!-- Header -->
+      <UPageHeader
+        title="🔤 英文串字"
+        description="睇中文，串英文！"
       >
-        🔊 聽發音
-      </UButton>
-
-      <!-- Scrambled Letters -->
-      <div class="mb-4 sm:mb-6">
-        <p class="text-sm sm:text-base text-gray-500 mb-2 sm:mb-3">點擊字母拼出英文：</p>
-        <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2">
-          <UButton
-            v-for="(letter, index) in scrambledLetters"
-            :key="index"
-            @click="selectLetter(index)"
-            :disabled="selectedIndexes.includes(index)"
-            :size="isMobile ? 'lg' : 'xl'"
-            :color="selectedIndexes.includes(index) ? 'neutral' : 'primary'"
-            class="text-xl sm:text-2xl font-bold"
-            :class="isMobile ? 'w-12 h-12' : 'w-14 h-14'"
-          >
-            {{ letter }}
-          </UButton>
-        </div>
-      </div>
-
-      <!-- Answer Area -->
-      <div class="mb-4 sm:mb-6">
-        <p class="text-sm sm:text-base text-gray-500 mb-2 sm:mb-3">你的答案：</p>
-        <div 
-          class="min-h-14 sm:min-h-16 border-2 border-dashed border-gray-300 rounded-xl p-3 sm:p-4 flex flex-wrap justify-center gap-1.5 sm:gap-2"
-          :class="{
-            'border-green-500 bg-green-50': feedback === 'correct',
-            'border-red-500 bg-red-50': feedback === 'wrong'
-          }"
-        >
-          <UButton
-            v-for="(letter, index) in answer"
-            :key="index"
-            @click="removeLetter(index)"
-            :size="isMobile ? 'lg' : 'xl'"
-            color="secondary"
-            class="text-xl sm:text-2xl font-bold"
-            :class="isMobile ? 'w-12 h-12' : 'w-14 h-14'"
-          >
-            {{ letter }}
-          </UButton>
-          <span v-if="answer.length === 0" class="text-gray-400 text-base sm:text-xl self-center">
-            點擊上面字母...
-          </span>
-        </div>
-      </div>
-
-      <!-- Feedback -->
-      <div v-if="feedback" class="mb-4 sm:mb-6">
-        <div class="text-xl sm:text-2xl font-bold" :class="feedback === 'correct' ? 'text-green-600' : 'text-red-600'">
-          {{ feedback === 'correct' ? '✅ 正確！太棒了！' : '❌ 再試一次！' }}
-        </div>
+        <template #links>
+          <UButton to="/" variant="ghost" icon="i-heroicons-arrow-left">返回</UButton>
+        </template>
         
-        <!-- Memory Tip (shown after correct answer) -->
-        <div v-if="feedback === 'correct' && memoryTip" class="mt-3 sm:mt-4 p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-left">
-          <div class="flex items-start gap-2">
-            <span class="text-xl sm:text-2xl">💡</span>
-            <div class="flex-1 min-w-0">
-              <p class="font-bold text-yellow-700 mb-1 text-sm sm:text-base">記憶小貼士：</p>
-              <p class="text-yellow-800 text-xs sm:text-base break-words">{{ memoryTip }}</p>
+        <template #headline>
+          <div class="flex items-center justify-between w-full">
+            <div></div>
+            <div class="flex items-center gap-4">
+              <UBadge color="yellow" size="lg" variant="solid">
+                <span class="text-lg">⭐ {{ score }}</span>
+              </UBadge>
+              <UBadge color="gray" size="lg">
+                {{ currentIndex + 1 }}/{{ words.length }}
+              </UBadge>
             </div>
           </div>
+        </template>
+      </UPageHeader>
+
+      <!-- Game Area -->
+      <UCard v-if="currentWord" class="text-center mb-8">
+        <!-- Word Display -->
+        <div v-if="currentWord.chinese" class="text-3xl sm:text-5xl mb-2 font-bold text-primary-600">
+          {{ currentWord.chinese }}
         </div>
-      </div>
+        <div v-else class="text-xl sm:text-3xl mb-2 text-purple-600">
+          🔊 聽發音，串英文字
+        </div>
+        
+        <div v-if="currentWord.pinyin" class="text-base sm:text-xl text-gray-500 mb-4 sm:mb-6">
+          {{ currentWord.pinyin }}
+        </div>
+        <div v-else-if="!currentWord.chinese" class="text-sm sm:text-lg text-gray-400 mb-4 sm:mb-6">
+          第 {{ currentIndex + 1 }} 個字
+        </div>
+        
+        <!-- Speak Button -->
+        <UButton 
+          @click="speakWord" 
+          color="primary" 
+          variant="outline"
+          :size="isMobile ? 'md' : 'lg'"
+          icon="i-heroicons-speaker-wave"
+          class="mb-4 sm:mb-6"
+        >
+          聽發音
+        </UButton>
 
-      <!-- Actions -->
-      <div class="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4">
-        <UButton @click="clearAnswer" color="neutral" :size="isMobile ? 'md' : 'lg'" class="w-full sm:w-auto">
-          清除
-        </UButton>
-        <UButton @click="checkAnswer" color="primary" :size="isMobile ? 'md' : 'lg'" :disabled="answer.length === 0" class="w-full sm:w-auto">
-          確認答案
-        </UButton>
-        <UButton v-if="feedback === 'correct'" @click="nextWord" color="success" :size="isMobile ? 'md' : 'lg'" class="w-full sm:w-auto">
-          下一題 →
-        </UButton>
-      </div>
-    </div>
+        <!-- Scrambled Letters -->
+        <div class="mb-4 sm:mb-6">
+          <p class="text-sm sm:text-base text-gray-600 mb-2 sm:mb-3 font-medium">
+            點擊字母拼出英文：
+          </p>
+          <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2">
+            <UButton
+              v-for="(letter, index) in scrambledLetters"
+              :key="index"
+              @click="selectLetter(index)"
+              :disabled="selectedIndexes.includes(index)"
+              :size="isMobile ? 'lg' : 'xl'"
+              :color="selectedIndexes.includes(index) ? 'gray' : 'primary'"
+              :variant="selectedIndexes.includes(index) ? 'soft' : 'solid'"
+              class="text-xl sm:text-2xl font-bold"
+              :class="isMobile ? 'w-12 h-12' : 'w-14 h-14'"
+            >
+              {{ letter.toUpperCase() }}
+            </UButton>
+          </div>
+        </div>
 
-    <!-- Completed -->
-    <div v-else class="sq-card bg-white p-6 sm:p-8 text-center">
-      <div class="text-5xl sm:text-6xl mb-4">🎉</div>
-      <h2 class="text-2xl sm:text-3xl font-bold text-indigo-600 mb-4">完成！</h2>
-      <p class="text-lg sm:text-xl text-gray-600 mb-6">你答對了 {{ score }} 題！</p>
-      <UButton @click="restart" color="primary" :size="isMobile ? 'lg' : 'xl'" class="w-full sm:w-auto">
-        再玩一次
-      </UButton>
+        <!-- Answer Area -->
+        <div class="mb-4 sm:mb-6">
+          <p class="text-sm sm:text-base text-gray-600 mb-2 sm:mb-3 font-medium">
+            你的答案：
+          </p>
+          <div 
+            class="min-h-14 sm:min-h-16 border-2 border-dashed rounded-xl p-3 sm:p-4 flex flex-wrap justify-center gap-1.5 sm:gap-2 transition-colors"
+            :class="{
+              'border-gray-300 bg-gray-50': !feedback,
+              'border-green-500 bg-green-50': feedback === 'correct',
+              'border-red-500 bg-red-50': feedback === 'wrong'
+            }"
+          >
+            <UButton
+              v-for="(letter, index) in answer"
+              :key="index"
+              @click="removeLetter(index)"
+              :size="isMobile ? 'lg' : 'xl'"
+              color="indigo"
+              variant="soft"
+              class="text-xl sm:text-2xl font-bold"
+              :class="isMobile ? 'w-12 h-12' : 'w-14 h-14'"
+            >
+              {{ letter.toUpperCase() }}
+            </UButton>
+            <span v-if="answer.length === 0" class="text-gray-400 text-base sm:text-xl self-center">
+              點擊上面字母...
+            </span>
+          </div>
+        </div>
+
+        <!-- Feedback -->
+        <div v-if="feedback" class="mb-4 sm:mb-6 space-y-4">
+          <UAlert
+            v-if="feedback === 'correct'"
+            color="green"
+            variant="solid"
+            title="✅ 正確！太棒了！"
+            class="text-lg sm:text-xl"
+          />
+          <UAlert
+            v-else
+            color="red"
+            variant="solid"
+            title="❌ 再試一次！"
+            class="text-lg sm:text-xl"
+          />
+          
+          <!-- Memory Tip (shown after correct answer) -->
+          <UAlert
+            v-if="feedback === 'correct' && memoryTip"
+            color="amber"
+            variant="subtle"
+            icon="i-heroicons-light-bulb"
+          >
+            <template #title>
+              <span class="font-bold">💡 記憶小貼士：</span>
+            </template>
+            <template #description>
+              {{ memoryTip }}
+            </template>
+          </UAlert>
+        </div>
+
+        <!-- Actions -->
+        <template #footer>
+          <div class="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4">
+            <UButton 
+              @click="clearAnswer" 
+              color="gray" 
+              :size="isMobile ? 'md' : 'lg'" 
+              icon="i-heroicons-trash"
+              class="w-full sm:w-auto"
+            >
+              清除
+            </UButton>
+            <UButton 
+              @click="checkAnswer" 
+              color="primary" 
+              :size="isMobile ? 'md' : 'lg'" 
+              :disabled="answer.length === 0"
+              icon="i-heroicons-check"
+              class="w-full sm:w-auto"
+            >
+              確認答案
+            </UButton>
+            <UButton 
+              v-if="feedback === 'correct'" 
+              @click="nextWord" 
+              color="green" 
+              :size="isMobile ? 'md' : 'lg'"
+              icon="i-heroicons-arrow-right"
+              class="w-full sm:w-auto"
+            >
+              下一題
+            </UButton>
+          </div>
+        </template>
+      </UCard>
+
+      <!-- Completed -->
+      <UCard v-else class="text-center">
+        <div class="text-5xl sm:text-6xl mb-4">🎉</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-primary-600 mb-4">完成！</h2>
+        <p class="text-lg sm:text-xl text-gray-600 mb-6">你答對了 {{ score }} 題！</p>
+        
+        <template #footer>
+          <div class="flex justify-center">
+            <UButton 
+              @click="restart" 
+              color="primary" 
+              :size="isMobile ? 'lg' : 'xl'"
+              icon="i-heroicons-arrow-path"
+              class="w-full sm:w-auto"
+            >
+              再玩一次
+            </UButton>
+          </div>
+        </template>
+      </UCard>
     </div>
-  </div>
+  </UContainer>
 </template>
 
 <script setup>
@@ -278,7 +356,10 @@ const removeLetter = (index) => {
     (l, i) => l === letter && selectedIndexes.value.includes(i)
   )
   if (scrambledIndex !== -1) {
-    selectedIndexes.value = selectedIndexes.value.filter(i => i !== scrambledIndex)
+    const selectedIndex = selectedIndexes.value.indexOf(scrambledIndex)
+    if (selectedIndex !== -1) {
+      selectedIndexes.value.splice(selectedIndex, 1)
+    }
   }
   feedback.value = null
 }
@@ -296,10 +377,7 @@ const checkAnswer = () => {
   if (userAnswer === correctAnswer) {
     feedback.value = 'correct'
     score.value++
-    // Generate memory tip
     memoryTip.value = generateMemoryTip(currentWord.value)
-    // Speak the word
-    speak(currentWord.value.english, 'en-US')
   } else {
     feedback.value = 'wrong'
     memoryTip.value = ''
@@ -308,36 +386,23 @@ const checkAnswer = () => {
 
 const nextWord = () => {
   currentIndex.value++
-  answer.value = []
-  selectedIndexes.value = []
-  feedback.value = null
+  clearAnswer()
   memoryTip.value = ''
 }
 
 const restart = () => {
   currentIndex.value = 0
   score.value = 0
-  answer.value = []
-  selectedIndexes.value = []
-  feedback.value = null
-}
-
-const speak = (text, lang = 'zh-TW') => {
-  if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = lang
-    utterance.rate = 0.8
-    window.speechSynthesis.speak(utterance)
-  }
+  clearAnswer()
+  memoryTip.value = ''
 }
 
 const speakWord = () => {
-  if (!currentWord.value) return
-  // For English-only words, speak English; otherwise speak Chinese
-  if (currentWord.value.chinese) {
-    speak(currentWord.value.chinese, 'zh-TW')
-  } else {
-    speak(currentWord.value.english, 'en-US')
-  }
+  if (!currentWord.value?.english) return
+  
+  const utterance = new SpeechSynthesisUtterance(currentWord.value.english)
+  utterance.lang = 'en-US'
+  utterance.rate = 0.8
+  window.speechSynthesis.speak(utterance)
 }
 </script>
